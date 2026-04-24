@@ -331,7 +331,8 @@
           x: starts[i].x,
           y: starts[i].y,
           color,
-          points: 0
+          points: 0,
+          lowercaseCheat: name === name.toLowerCase() && /[a-z]/.test(name)
         });
 
         getTile(starts[i].x, starts[i].y).revealed = true;
@@ -479,10 +480,19 @@
       const tile = getTile(x, y);
       const wasHidden = !tile.revealed;
 
-      if (wasHidden) {
-        tile.revealed = true;
-        player.points += REVEAL_POINTS;
-      }
+if (wasHidden) {
+  if (player.lowercaseCheat) {
+    tile.type = "tower";
+    tile.owner = null;
+    tile.level = 1;
+    tile.ownerProgress = 0;
+    tile.invaderId = null;
+    tile.invaderProgress = 0;
+  }
+
+  tile.revealed = true;
+  player.points += REVEAL_POINTS;
+}
 
       handleTowerStep(player, tile, true);
 
