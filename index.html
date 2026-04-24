@@ -341,9 +341,7 @@
 
           const progressBar = document.createElement("div");
           progressBar.className = "progress-bar";
-
-          const progressPercent = getTowerProgressPercent(tile);
-          progressBar.style.width = progressPercent + "%";
+          progressBar.style.width = getTowerProgressPercent(tile) + "%";
 
           progressWrap.appendChild(progressBar);
           div.appendChild(progressWrap);
@@ -392,7 +390,7 @@
       const player = players[currentPlayer];
       const tile = getTile(player.x, player.y);
 
-      if (!tile.revealed) tile.revealed = true;
+      tile.revealed = true;
 
       handleTowerStep(player, tile, false);
       nextTurn();
@@ -407,7 +405,7 @@
         tile.ownerProgress = 0;
         tile.invaderId = null;
         tile.invaderProgress = 0;
-        player.points += 50;
+        player.points += pointsForTowerLevel(tile.level);
         return;
       }
 
@@ -425,6 +423,7 @@
         if (tile.ownerProgress >= needed) {
           tile.level++;
           tile.ownerProgress = 0;
+          player.points += pointsForTowerLevel(tile.level);
         }
 
         return;
@@ -444,8 +443,12 @@
         tile.invaderId = null;
         tile.invaderProgress = 0;
         tile.ownerProgress = 0;
-        player.points += 50;
+        player.points += pointsForTowerLevel(tile.level);
       }
+    }
+
+    function pointsForTowerLevel(level) {
+      return 50 + (level - 1) * 107;
     }
 
     function getTowerProgressPercent(tile) {
