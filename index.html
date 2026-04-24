@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hidden Towers</title>
+
   <style>
     * { box-sizing: border-box; }
 
@@ -21,6 +22,13 @@
     .app {
       width: min(95vw, 900px);
       text-align: center;
+    }
+
+    .setup-card {
+      background: #202636;
+      padding: 16px;
+      border-radius: 16px;
+      margin-bottom: 16px;
     }
 
     .top, .setup-row {
@@ -48,13 +56,6 @@
       cursor: pointer;
       background: #ffd166;
       color: #1b1b1b;
-    }
-
-    .setup-card {
-      background: #202636;
-      padding: 16px;
-      border-radius: 16px;
-      margin-bottom: 16px;
     }
 
     .info {
@@ -103,7 +104,7 @@
     }
 
     .hidden {
-      background: #ffffff;
+      background: #fff;
       color: transparent;
       border-color: #e5e5e5;
     }
@@ -124,7 +125,6 @@
       place-items: center;
       font-size: clamp(24px, 4vw, 42px);
       font-weight: 900;
-      line-height: 1;
       pointer-events: none;
       z-index: 1;
     }
@@ -211,6 +211,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="app">
     <h1>Hidden Towers</h1>
@@ -238,7 +239,7 @@
     <div class="board" id="board"></div>
 
     <div class="note">
-      First to 5000 points or 4 towers wins. Click an adjacent square to move. Use Stay on a tower to level it up or capture it.
+      Reveal hidden tiles for 10 points. First to 5000 points or 4 towers wins. Arrow keys move. S stays. Press R 5 times to reset.
     </div>
   </div>
 
@@ -258,15 +259,19 @@
     const MIN_DISTANCE = 5;
     const MAX_TOWER_LEVEL = 8;
     const POINTS_TO_WIN = 5000;
-    const TOWERS_TO_WIN = Math.floor(TOWER_COUNT / 2) + 1;
+    const TOWERS_TO_WIN = 4;
+    const REVEAL_POINTS = 10;
 
     const DEFAULT_COLORS = ["#e03131", "#1971c2", "#2f9e44", "#9c36b5"];
 
-    let consecutiveStayTurns = 0;
     let tiles = [];
     let players = [];
     let currentPlayer = 0;
     let gameEnded = false;
+    let finalWinnerId = null;
+    let consecutiveStayTurns = 0;
+    let resetPressCount = 0;
+    let resetTimer = null;
 
     buildPlayerInputs();
 
@@ -292,6 +297,8 @@
       players = [];
       currentPlayer = 0;
       gameEnded = false;
+      finalWinnerId = null;
+      consecutiveStayTurns = 0;
 
       document.getElementById("gameOver").style.display = "none";
       document.getElementById("setupCard").style.display = "none";
@@ -346,9 +353,7 @@
           y: Math.floor(Math.random() * SIZE)
         };
 
-        const farEnough = positions.every(other => {
-          return manhattan(pos, other) >= MIN_DISTANCE;
-        });
+        const farEnough = positions.every(other => manhattan(pos, other) >= MIN_DISTANCE);
 
         if (farEnough) positions.push(pos);
       }
@@ -388,7 +393,9 @@
 
       if (players.length && !gameEnded) {
         document.getElementById("info").textContent = `${players[currentPlayer].name}'s turn`;
-      } else if (!players.length) {
+      } else if (players.length && gameEnded) {
+        document.getElementById("info").textContent = "Game over. Hide the final screen to inspect the board.";
+      } else {
         document.getElementById("info").textContent = "Name players, pick colors, and start.";
       }
     }
@@ -398,12 +405,10 @@
       scores.innerHTML = "";
 
       players.forEach(player => {
-        const towers = countOwnedTowers(player.id);
-
         const div = document.createElement("div");
         div.className = "score";
         div.style.background = player.color;
-        div.textContent = `${player.name}: ${player.points} pts | Towers: ${towers}`;
+        div.textContent = `${player.name}: ${player.points} pts | Towers: ${countOwnedTowers(player.id)}`;
         scores.appendChild(div);
       });
     }
@@ -461,8 +466,9 @@
     }
 
     function moveTo(x, y) {
-  if (!players.length || gameEnded) return;
-  if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) return;
+      if (!players.length || gameEnded) return;
+      if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) return;
+
       const player = players[currentPlayer];
 
       if (!isAdjacent(player.x, player.y, x, y)) return;
@@ -471,14 +477,19 @@
       player.y = y;
 
       const tile = getTile(x, y);
-      tile.revealed = true;
+      const wasHidden = !tile.revealed;
+
+      if (wasHidden) {
+        tile.revealed = true;
+        player.points += REVEAL_POINTS;
+      }
 
       handleTowerStep(player, tile, true);
 
       consecutiveStayTurns = 0;
 
       if (checkWinner(player)) return;
-      
+
       nextTurn();
     }
 
@@ -488,20 +499,18 @@
       const player = players[currentPlayer];
       const tile = getTile(player.x, player.y);
 
-      tile.revealed = true;
-
       handleTowerStep(player, tile, false);
 
-consecutiveStayTurns++;
+      consecutiveStayTurns++;
 
-if (checkWinner(player)) return;
+      if (checkWinner(player)) return;
 
-if (consecutiveStayTurns >= players.length * 3) {
-  endGameByStalemate();
-  return;
-}
+      if (consecutiveStayTurns >= players.length * 3) {
+        endGame(player, "Game ended because everyone stayed for 3 full rounds with no movement.", true);
+        return;
+      }
 
-nextTurn();
+      nextTurn();
     }
 
     function handleTowerStep(player, tile, justMovedOntoTile) {
@@ -526,9 +535,7 @@ nextTurn();
 
         tile.ownerProgress++;
 
-        const needed = tile.level;
-
-        if (tile.ownerProgress >= needed) {
+        if (tile.ownerProgress >= tile.level) {
           tile.level++;
           tile.ownerProgress = 0;
           player.points += pointsForTowerLevel(tile.level);
@@ -563,34 +570,32 @@ nextTurn();
       const ownedTowers = countOwnedTowers(player.id);
 
       if (player.points >= POINTS_TO_WIN) {
-        endGame(player, `${player.name} reached ${POINTS_TO_WIN} points.`);
+        endGame(player, `${player.name} reached ${POINTS_TO_WIN} points.`, false);
         return true;
       }
 
       if (ownedTowers >= TOWERS_TO_WIN) {
-        endGame(player, `${player.name} owns ${ownedTowers} of ${TOWER_COUNT} towers.`);
+        endGame(player, `${player.name} owns ${ownedTowers} of ${TOWER_COUNT} towers.`, false);
         return true;
       }
 
       return false;
     }
 
-    function endGame(winner, reason) {
+    function endGame(winner, reason, stalemate) {
       gameEnded = true;
+      finalWinnerId = stalemate ? getRanking()[0].id : winner.id;
       render();
 
-      document.getElementById("winnerTitle").textContent = `${winner.name} Wins!`;
-      document.getElementById("winnerReason").textContent = reason;
+      const finalWinner = players.find(p => p.id === finalWinnerId);
 
-      const ranking = [...players].sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        return countOwnedTowers(b.id) - countOwnedTowers(a.id);
-      });
+      document.getElementById("winnerTitle").textContent = `${finalWinner.name} Wins!`;
+      document.getElementById("winnerReason").textContent = reason;
 
       const rankingBox = document.getElementById("finalRanking");
       rankingBox.innerHTML = "";
 
-      ranking.forEach((player, index) => {
+      getRanking().forEach((player, index) => {
         const div = document.createElement("div");
         div.className = "rank-row";
         div.style.borderColor = player.color;
@@ -608,15 +613,29 @@ nextTurn();
       document.getElementById("gameOver").style.display = "grid";
     }
 
+    function getRanking() {
+      return [...players].sort((a, b) => {
+        if (finalWinnerId !== null) {
+          if (a.id === finalWinnerId) return -1;
+          if (b.id === finalWinnerId) return 1;
+        }
+
+        if (b.points !== a.points) return b.points - a.points;
+        if (countOwnedTowers(b.id) !== countOwnedTowers(a.id)) {
+          return countOwnedTowers(b.id) - countOwnedTowers(a.id);
+        }
+
+        return highestTowerLevel(b.id) - highestTowerLevel(a.id);
+      });
+    }
+
     function countOwnedTowers(playerId) {
       return tiles.filter(tile => tile.type === "tower" && tile.owner === playerId).length;
     }
 
     function highestTowerLevel(playerId) {
       const owned = tiles.filter(tile => tile.type === "tower" && tile.owner === playerId);
-
       if (!owned.length) return 0;
-
       return Math.max(...owned.map(tile => tile.level));
     }
 
@@ -638,10 +657,12 @@ nextTurn();
       render();
     }
 
+    function hideGameOver() {
+      document.getElementById("gameOver").style.display = "none";
+    }
+
     function isAdjacent(x1, y1, x2, y2) {
-      const dx = Math.abs(x1 - x2);
-      const dy = Math.abs(y1 - y2);
-      return dx + dy === 1;
+      return Math.abs(x1 - x2) + Math.abs(y1 - y2) === 1;
     }
 
     function getTile(x, y) {
@@ -657,7 +678,9 @@ nextTurn();
       players = [];
       currentPlayer = 0;
       gameEnded = false;
+      finalWinnerId = null;
       consecutiveStayTurns = 0;
+      resetPressCount = 0;
 
       document.getElementById("board").innerHTML = "";
       document.getElementById("scores").innerHTML = "";
@@ -668,89 +691,35 @@ nextTurn();
       buildPlayerInputs();
     }
 
-    let resetPressCount = 0;
-let resetTimer = null;
+    document.addEventListener("keydown", function(event) {
+      const key = event.key.toLowerCase();
 
-document.addEventListener("keydown", function(event) {
-  if (!players.length || gameEnded) return;
+      if (key === "r") {
+        resetPressCount++;
 
-  const key = event.key.toLowerCase();
-  const player = players[currentPlayer];
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(() => {
+          resetPressCount = 0;
+        }, 1500);
 
-  if (key === "arrowup") {
-    moveTo(player.x, player.y - 1);
-  }
+        if (resetPressCount >= 5) {
+          resetGame();
+          resetPressCount = 0;
+        }
 
-  if (key === "arrowdown") {
-    moveTo(player.x, player.y + 1);
-  }
+        return;
+      }
 
-  if (key === "arrowleft") {
-    moveTo(player.x - 1, player.y);
-  }
+      if (!players.length || gameEnded) return;
 
-  if (key === "arrowright") {
-    moveTo(player.x + 1, player.y);
-  }
+      const player = players[currentPlayer];
 
-  if (key === "s") {
-    stayTurn();
-  }
-
-  if (key === "r") {
-    resetPressCount++;
-
-    clearTimeout(resetTimer);
-    resetTimer = setTimeout(() => {
-      resetPressCount = 0;
-    }, 1500);
-
-    if (resetPressCount >= 5) {
-      resetGame();
-      resetPressCount = 0;
-    }
-  }
-});
-
-    function hideGameOver() {
-  document.getElementById("gameOver").style.display = "none";
-}
-
-    function endGameByStalemate() {
-  gameEnded = true;
-  render();
-
-  const ranking = [...players].sort((a, b) => {
-    if (b.points !== a.points) return b.points - a.points;
-    return countOwnedTowers(b.id) - countOwnedTowers(a.id);
-  });
-
-  const winner = ranking[0];
-
-  document.getElementById("winnerTitle").textContent = `${winner.name} Wins!`;
-  document.getElementById("winnerReason").textContent =
-    "Game ended because everyone stayed for 3 full rounds with no movement.";
-
-  const rankingBox = document.getElementById("finalRanking");
-  rankingBox.innerHTML = "";
-
-  ranking.forEach((player, index) => {
-    const div = document.createElement("div");
-    div.className = "rank-row";
-    div.style.borderColor = player.color;
-
-    div.innerHTML = `
-      <strong>#${index + 1} ${player.name}</strong><br>
-      Points: ${player.points}<br>
-      Towers Owned: ${countOwnedTowers(player.id)}<br>
-      Highest Tower: Level ${highestTowerLevel(player.id)}
-    `;
-
-    rankingBox.appendChild(div);
-  });
-
-  document.getElementById("gameOver").style.display = "grid";
-}
+      if (key === "arrowup") moveTo(player.x, player.y - 1);
+      if (key === "arrowdown") moveTo(player.x, player.y + 1);
+      if (key === "arrowleft") moveTo(player.x - 1, player.y);
+      if (key === "arrowright") moveTo(player.x + 1, player.y);
+      if (key === "s") stayTurn();
+    });
   </script>
 </body>
 </html>
