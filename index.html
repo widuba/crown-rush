@@ -655,6 +655,50 @@
 
       buildPlayerInputs();
     }
+
+    let resetPressCount = 0;
+let resetTimer = null;
+
+document.addEventListener("keydown", function(event) {
+  if (!players.length || gameEnded) return;
+
+  const key = event.key.toLowerCase();
+  const player = players[currentPlayer];
+
+  if (key === "arrowup") {
+    moveTo(player.x, player.y - 1);
+  }
+
+  if (key === "arrowdown") {
+    moveTo(player.x, player.y + 1);
+  }
+
+  if (key === "arrowleft") {
+    moveTo(player.x - 1, player.y);
+  }
+
+  if (key === "arrowright") {
+    moveTo(player.x + 1, player.y);
+  }
+
+  if (key === "s") {
+    stayTurn();
+  }
+
+  if (key === "r") {
+    resetPressCount++;
+
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => {
+      resetPressCount = 0;
+    }, 1500);
+
+    if (resetPressCount >= 5) {
+      resetGame();
+      resetPressCount = 0;
+    }
+  }
+});
   </script>
 </body>
 </html>
