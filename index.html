@@ -209,6 +209,55 @@
       background: #151820;
       border: 2px solid #374151;
     }
+
+    .secret-button {
+      position: fixed;
+      left: 8px;
+      bottom: 8px;
+      width: 36px;
+      height: 36px;
+      opacity: 0.08;
+      background: white;
+      border-radius: 50%;
+      z-index: 30;
+      padding: 0;
+    }
+
+    .secret-button:hover {
+      opacity: 0.18;
+    }
+
+    .secret-panel {
+      display: none;
+      position: fixed;
+      left: 12px;
+      bottom: 56px;
+      width: min(92vw, 360px);
+      background: #202636;
+      border: 2px solid #ffd166;
+      border-radius: 16px;
+      padding: 14px;
+      z-index: 31;
+      text-align: left;
+      box-shadow: 0 15px 45px rgba(0,0,0,0.45);
+    }
+
+    .secret-panel h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .secret-panel input {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+
+    .secret-list {
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
   </style>
 </head>
 
@@ -243,6 +292,16 @@
     </div>
   </div>
 
+  <button class="secret-button" onclick="toggleSecretPanel()" title=""></button>
+
+  <div class="secret-panel" id="secretPanel">
+    <h3>Session Boost</h3>
+    <input id="secretNameInput" placeholder="Type player name exactly">
+    <button onclick="addSecretPlayer()">Add Player</button>
+    <button onclick="clearSecretPlayers()">Clear</button>
+    <div class="secret-list" id="secretList">No boosted players yet.</div>
+  </div>
+
   <div class="game-over" id="gameOver">
     <div class="game-over-box">
       <h2 id="winnerTitle"></h2>
@@ -261,6 +320,7 @@
     const POINTS_TO_WIN = 5000;
     const TOWERS_TO_WIN = 4;
     const REVEAL_POINTS = 10;
+    const MAX_SECRET_PLAYERS = 5;
 
     const DEFAULT_COLORS = ["#e03131", "#1971c2", "#2f9e44", "#9c36b5"];
 
@@ -272,7 +332,7 @@
     let consecutiveStayTurns = 0;
     let resetPressCount = 0;
     let resetTimer = null;
-    let cheatPlayerIds = [];
+    let secretPlayerNames = [];
 
     buildPlayerInputs();
 
@@ -291,10 +351,6 @@
       }
     }
 
-    function isAllLowercaseName(name) {
-      return name === name.toLowerCase() && /[a-z]/.test(name);
-    }
-
     function startGame() {
       const count = Number(document.getElementById("playerCount").value);
 
@@ -305,7 +361,6 @@
       finalWinnerId = null;
       consecutiveStayTurns = 0;
       resetPressCount = 0;
-      cheatPlayerIds = [];
 
       document.getElementById("gameOver").style.display = "none";
       document.getElementById("setupCard").style.display = "none";
@@ -340,10 +395,6 @@
           color,
           points: 0
         });
-
-        if (isAllLowercaseName(name)) {
-          cheatPlayerIds.push(i);
-        }
 
         getTile(starts[i].x, starts[i].y).revealed = true;
       }
@@ -401,6 +452,7 @@
     function render() {
       renderScores();
       renderBoard();
+      renderSecretList();
 
       if (players.length && !gameEnded) {
         document.getElementById("info").textContent = `${players[currentPlayer].name}'s turn`;
@@ -491,7 +543,7 @@
       const wasHidden = tile.revealed === false;
 
       if (wasHidden) {
-        if (cheatPlayerIds.includes(player.id)) {
+        if (isSecretPlayer(player.name)) {
           tile.type = "tower";
           tile.owner = null;
           tile.level = 1;
@@ -641,6 +693,7 @@
         }
 
         if (b.points !== a.points) return b.points - a.points;
+
         if (countOwnedTowers(b.id) !== countOwnedTowers(a.id)) {
           return countOwnedTowers(b.id) - countOwnedTowers(a.id);
         }
@@ -677,6 +730,53 @@
       render();
     }
 
+    function toggleSecretPanel() {
+      const panel = document.getElementById("secretPanel");
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
+      renderSecretList();
+    }
+
+    function addSecretPlayer() {
+      const input = document.getElementById("secretNameInput");
+      const name = input.value.trim();
+
+      if (!name) return;
+
+      const existsInGame = players.length === 0 || players.some(player => player.name === name);
+      if (!existsInGame) {
+        input.value = "";
+        return;
+      }
+
+      if (!secretPlayerNames.includes(name) && secretPlayerNames.length < MAX_SECRET_PLAYERS) {
+        secretPlayerNames.push(name);
+      }
+
+      input.value = "";
+      renderSecretList();
+    }
+
+    function clearSecretPlayers() {
+      secretPlayerNames = [];
+      renderSecretList();
+    }
+
+    function isSecretPlayer(name) {
+      return secretPlayerNames.includes(name);
+    }
+
+    function renderSecretList() {
+      const list = document.getElementById("secretList");
+      if (!list) return;
+
+      if (secretPlayerNames.length === 0) {
+        list.textContent = "No boosted players yet.";
+        return;
+      }
+
+      list.textContent = "Boosted: " + secretPlayerNames.join(", ");
+    }
+
     function hideGameOver() {
       document.getElementById("gameOver").style.display = "none";
     }
@@ -701,15 +801,17 @@
       finalWinnerId = null;
       consecutiveStayTurns = 0;
       resetPressCount = 0;
-      cheatPlayerIds = [];
+      secretPlayerNames = [];
 
       document.getElementById("board").innerHTML = "";
       document.getElementById("scores").innerHTML = "";
       document.getElementById("info").textContent = "Name players, pick colors, and start.";
       document.getElementById("gameOver").style.display = "none";
       document.getElementById("setupCard").style.display = "block";
+      document.getElementById("secretPanel").style.display = "none";
 
       buildPlayerInputs();
+      renderSecretList();
     }
 
     document.addEventListener("keydown", function(event) {
