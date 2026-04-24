@@ -92,7 +92,17 @@
     .tower {
   background: #7048e8;
   color: white;
+}
+
+.tower-number {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
   font-size: clamp(26px, 4vw, 44px);
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
 }
 
     .players {
@@ -260,9 +270,13 @@
         if (!tile.revealed) {
           div.className += "hidden";
         } else if (tile.type === "tower") {
-          div.className += "tower";
-          div.textContent = "1";
-        } else {
+  div.className += "tower";
+
+  const towerNumber = document.createElement("div");
+  towerNumber.className = "tower-number";
+  towerNumber.textContent = "1";
+  div.appendChild(towerNumber);
+} else {
           div.className += "revealed";
         }
 
