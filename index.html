@@ -19,11 +19,11 @@
     }
 
     .app {
-      width: min(95vw, 850px);
+      width: min(95vw, 900px);
       text-align: center;
     }
 
-    .top {
+    .top, .setup-row {
       display: flex;
       justify-content: center;
       gap: 12px;
@@ -31,17 +31,30 @@
       margin-bottom: 14px;
     }
 
-    select, button {
+    input, select, button {
       padding: 10px 14px;
       border-radius: 10px;
       border: none;
       font-weight: bold;
     }
 
+    input[type="color"] {
+      padding: 3px;
+      width: 52px;
+      height: 42px;
+    }
+
     button {
       cursor: pointer;
       background: #ffd166;
       color: #1b1b1b;
+    }
+
+    .setup-card {
+      background: #202636;
+      padding: 16px;
+      border-radius: 16px;
+      margin-bottom: 16px;
     }
 
     .info {
@@ -164,29 +177,77 @@
       margin-top: 14px;
       font-size: 14px;
     }
+
+    .game-over {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.78);
+      z-index: 20;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .game-over-box {
+      background: #202636;
+      border-radius: 22px;
+      padding: 24px;
+      width: min(95vw, 650px);
+      border: 3px solid #ffd166;
+    }
+
+    .ranking {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0;
+      text-align: left;
+    }
+
+    .rank-row {
+      padding: 12px;
+      border-radius: 14px;
+      background: #151820;
+      border: 2px solid #374151;
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <h1>Hidden Towers</h1>
 
+    <div class="setup-card" id="setupCard">
+      <div class="setup-row">
+        <select id="playerCount" onchange="buildPlayerInputs()">
+          <option value="2">2 Players</option>
+          <option value="3">3 Players</option>
+          <option value="4">4 Players</option>
+        </select>
+        <button onclick="startGame()">Start Game</button>
+      </div>
+
+      <div id="playerInputs"></div>
+    </div>
+
     <div class="top">
-      <select id="playerCount">
-        <option value="2">2 Players</option>
-        <option value="3">3 Players</option>
-        <option value="4">4 Players</option>
-      </select>
-      <button onclick="startGame()">Start Game</button>
       <button onclick="stayTurn()">Stay</button>
       <button onclick="resetGame()">Reset</button>
     </div>
 
-    <div class="info" id="info">Choose players and start.</div>
+    <div class="info" id="info">Name players, pick colors, and start.</div>
     <div class="scores" id="scores"></div>
     <div class="board" id="board"></div>
 
     <div class="note">
-      Click an adjacent square to move. Use Stay when standing on a tower to level it up or capture it.
+      First to 5000 points or 4 towers wins. Click an adjacent square to move. Use Stay on a tower to level it up or capture it.
+    </div>
+  </div>
+
+  <div class="game-over" id="gameOver">
+    <div class="game-over-box">
+      <h2 id="winnerTitle"></h2>
+      <p id="winnerReason"></p>
+      <div class="ranking" id="finalRanking"></div>
+      <button onclick="resetGame()">Play Again</button>
     </div>
   </div>
 
@@ -195,12 +256,32 @@
     const TOWER_COUNT = 7;
     const MIN_DISTANCE = 5;
     const MAX_TOWER_LEVEL = 8;
+    const POINTS_TO_WIN = 5000;
+    const TOWERS_TO_WIN = Math.floor(TOWER_COUNT / 2) + 1;
 
-    const PLAYER_COLORS = ["#e03131", "#1971c2", "#2f9e44", "#9c36b5"];
+    const DEFAULT_COLORS = ["#e03131", "#1971c2", "#2f9e44", "#9c36b5"];
 
     let tiles = [];
     let players = [];
     let currentPlayer = 0;
+    let gameEnded = false;
+
+    buildPlayerInputs();
+
+    function buildPlayerInputs() {
+      const count = Number(document.getElementById("playerCount").value);
+      const box = document.getElementById("playerInputs");
+      box.innerHTML = "";
+
+      for (let i = 0; i < count; i++) {
+        box.innerHTML += `
+          <div class="setup-row">
+            <input id="name${i}" value="Player ${i + 1}" maxlength="16">
+            <input id="color${i}" type="color" value="${DEFAULT_COLORS[i]}">
+          </div>
+        `;
+      }
+    }
 
     function startGame() {
       const count = Number(document.getElementById("playerCount").value);
@@ -208,6 +289,10 @@
       tiles = [];
       players = [];
       currentPlayer = 0;
+      gameEnded = false;
+
+      document.getElementById("gameOver").style.display = "none";
+      document.getElementById("setupCard").style.display = "none";
 
       for (let y = 0; y < SIZE; y++) {
         for (let x = 0; x < SIZE; x++) {
@@ -228,11 +313,15 @@
       const starts = generateStartPositions(count);
 
       for (let i = 0; i < count; i++) {
+        const name = document.getElementById(`name${i}`).value.trim() || `Player ${i + 1}`;
+        const color = document.getElementById(`color${i}`).value;
+
         players.push({
           id: i,
+          name,
           x: starts[i].x,
           y: starts[i].y,
-          color: PLAYER_COLORS[i],
+          color,
           points: 0
         });
 
@@ -295,10 +384,10 @@
       renderScores();
       renderBoard();
 
-      if (players.length) {
-        document.getElementById("info").textContent = `Player ${currentPlayer + 1}'s turn`;
-      } else {
-        document.getElementById("info").textContent = "Choose players and start.";
+      if (players.length && !gameEnded) {
+        document.getElementById("info").textContent = `${players[currentPlayer].name}'s turn`;
+      } else if (!players.length) {
+        document.getElementById("info").textContent = "Name players, pick colors, and start.";
       }
     }
 
@@ -307,10 +396,12 @@
       scores.innerHTML = "";
 
       players.forEach(player => {
+        const towers = countOwnedTowers(player.id);
+
         const div = document.createElement("div");
         div.className = "score";
         div.style.background = player.color;
-        div.textContent = `P${player.id + 1}: ${player.points} pts`;
+        div.textContent = `${player.name}: ${player.points} pts | Towers: ${towers}`;
         scores.appendChild(div);
       });
     }
@@ -358,7 +449,7 @@
           const piece = document.createElement("div");
           piece.className = "piece";
           piece.style.background = p.color;
-          piece.textContent = p.id + 1;
+          piece.textContent = p.name.charAt(0).toUpperCase();
           playerLayer.appendChild(piece);
         });
 
@@ -368,7 +459,7 @@
     }
 
     function moveTo(x, y) {
-      if (!players.length) return;
+      if (!players.length || gameEnded) return;
 
       const player = players[currentPlayer];
 
@@ -381,11 +472,14 @@
       tile.revealed = true;
 
       handleTowerStep(player, tile, true);
+
+      if (checkWinner(player)) return;
+
       nextTurn();
     }
 
     function stayTurn() {
-      if (!players.length) return;
+      if (!players.length || gameEnded) return;
 
       const player = players[currentPlayer];
       const tile = getTile(player.x, player.y);
@@ -393,6 +487,9 @@
       tile.revealed = true;
 
       handleTowerStep(player, tile, false);
+
+      if (checkWinner(player)) return;
+
       nextTurn();
     }
 
@@ -451,6 +548,67 @@
       return 50 + (level - 1) * 107;
     }
 
+    function checkWinner(player) {
+      const ownedTowers = countOwnedTowers(player.id);
+
+      if (player.points >= POINTS_TO_WIN) {
+        endGame(player, `${player.name} reached ${POINTS_TO_WIN} points.`);
+        return true;
+      }
+
+      if (ownedTowers >= TOWERS_TO_WIN) {
+        endGame(player, `${player.name} owns ${ownedTowers} of ${TOWER_COUNT} towers.`);
+        return true;
+      }
+
+      return false;
+    }
+
+    function endGame(winner, reason) {
+      gameEnded = true;
+      render();
+
+      document.getElementById("winnerTitle").textContent = `${winner.name} Wins!`;
+      document.getElementById("winnerReason").textContent = reason;
+
+      const ranking = [...players].sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        return countOwnedTowers(b.id) - countOwnedTowers(a.id);
+      });
+
+      const rankingBox = document.getElementById("finalRanking");
+      rankingBox.innerHTML = "";
+
+      ranking.forEach((player, index) => {
+        const div = document.createElement("div");
+        div.className = "rank-row";
+        div.style.borderColor = player.color;
+
+        div.innerHTML = `
+          <strong>#${index + 1} ${player.name}</strong><br>
+          Points: ${player.points}<br>
+          Towers Owned: ${countOwnedTowers(player.id)}<br>
+          Highest Tower: Level ${highestTowerLevel(player.id)}
+        `;
+
+        rankingBox.appendChild(div);
+      });
+
+      document.getElementById("gameOver").style.display = "grid";
+    }
+
+    function countOwnedTowers(playerId) {
+      return tiles.filter(tile => tile.type === "tower" && tile.owner === playerId).length;
+    }
+
+    function highestTowerLevel(playerId) {
+      const owned = tiles.filter(tile => tile.type === "tower" && tile.owner === playerId);
+
+      if (!owned.length) return 0;
+
+      return Math.max(...owned.map(tile => tile.level));
+    }
+
     function getTowerProgressPercent(tile) {
       if (tile.owner === null) return 0;
 
@@ -487,9 +645,15 @@
       tiles = [];
       players = [];
       currentPlayer = 0;
+      gameEnded = false;
+
       document.getElementById("board").innerHTML = "";
       document.getElementById("scores").innerHTML = "";
-      document.getElementById("info").textContent = "Choose players and start.";
+      document.getElementById("info").textContent = "Name players, pick colors, and start.";
+      document.getElementById("gameOver").style.display = "none";
+      document.getElementById("setupCard").style.display = "block";
+
+      buildPlayerInputs();
     }
   </script>
 </body>
