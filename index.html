@@ -262,6 +262,7 @@
 
     const DEFAULT_COLORS = ["#e03131", "#1971c2", "#2f9e44", "#9c36b5"];
 
+    let consecutiveStayTurns = 0;
     let tiles = [];
     let players = [];
     let currentPlayer = 0;
@@ -474,8 +475,10 @@
 
       handleTowerStep(player, tile, true);
 
-      if (checkWinner(player)) return;
+      consecutiveStayTurns = 0;
 
+      if (checkWinner(player)) return;
+      
       nextTurn();
     }
 
@@ -489,9 +492,16 @@
 
       handleTowerStep(player, tile, false);
 
-      if (checkWinner(player)) return;
+consecutiveStayTurns++;
 
-      nextTurn();
+if (checkWinner(player)) return;
+
+if (consecutiveStayTurns >= players.length * 3) {
+  endGameByStalemate();
+  return;
+}
+
+nextTurn();
     }
 
     function handleTowerStep(player, tile, justMovedOntoTile) {
@@ -703,6 +713,42 @@ document.addEventListener("keydown", function(event) {
 
     function hideGameOver() {
   document.getElementById("gameOver").style.display = "none";
+}
+
+    function endGameByStalemate() {
+  gameEnded = true;
+  render();
+
+  const ranking = [...players].sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    return countOwnedTowers(b.id) - countOwnedTowers(a.id);
+  });
+
+  const winner = ranking[0];
+
+  document.getElementById("winnerTitle").textContent = `${winner.name} Wins!`;
+  document.getElementById("winnerReason").textContent =
+    "Game ended because everyone stayed for 3 full rounds with no movement.";
+
+  const rankingBox = document.getElementById("finalRanking");
+  rankingBox.innerHTML = "";
+
+  ranking.forEach((player, index) => {
+    const div = document.createElement("div");
+    div.className = "rank-row";
+    div.style.borderColor = player.color;
+
+    div.innerHTML = `
+      <strong>#${index + 1} ${player.name}</strong><br>
+      Points: ${player.points}<br>
+      Towers Owned: ${countOwnedTowers(player.id)}<br>
+      Highest Tower: Level ${highestTowerLevel(player.id)}
+    `;
+
+    rankingBox.appendChild(div);
+  });
+
+  document.getElementById("gameOver").style.display = "grid";
 }
   </script>
 </body>
