@@ -271,7 +271,13 @@
         if (!tile.revealed) {
           div.className += "hidden";
         } else if (tile.type === "tower") {
-  div.className += "tower";
+
+  if (tile.owner !== undefined) {
+    const ownerColor = players[tile.owner].color;
+    div.style.background = ownerColor;
+  } else {
+    div.className += "tower";
+  }
 
   const towerNumber = document.createElement("div");
   towerNumber.className = "tower-number";
