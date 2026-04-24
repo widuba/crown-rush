@@ -272,6 +272,7 @@
     let consecutiveStayTurns = 0;
     let resetPressCount = 0;
     let resetTimer = null;
+    let cheatPlayerIds = [];
 
     buildPlayerInputs();
 
@@ -290,6 +291,10 @@
       }
     }
 
+    function isAllLowercaseName(name) {
+      return name === name.toLowerCase() && /[a-z]/.test(name);
+    }
+
     function startGame() {
       const count = Number(document.getElementById("playerCount").value);
 
@@ -299,6 +304,8 @@
       gameEnded = false;
       finalWinnerId = null;
       consecutiveStayTurns = 0;
+      resetPressCount = 0;
+      cheatPlayerIds = [];
 
       document.getElementById("gameOver").style.display = "none";
       document.getElementById("setupCard").style.display = "none";
@@ -331,9 +338,12 @@
           x: starts[i].x,
           y: starts[i].y,
           color,
-          points: 0,
-          lowercaseCheat: name === name.toLowerCase() && /[a-z]/.test(name)
+          points: 0
         });
+
+        if (isAllLowercaseName(name)) {
+          cheatPlayerIds.push(i);
+        }
 
         getTile(starts[i].x, starts[i].y).revealed = true;
       }
@@ -478,21 +488,21 @@
       player.y = y;
 
       const tile = getTile(x, y);
-      const wasHidden = !tile.revealed;
+      const wasHidden = tile.revealed === false;
 
-if (wasHidden) {
-  if (player.lowercaseCheat) {
-    tile.type = "tower";
-    tile.owner = null;
-    tile.level = 1;
-    tile.ownerProgress = 0;
-    tile.invaderId = null;
-    tile.invaderProgress = 0;
-  }
+      if (wasHidden) {
+        if (cheatPlayerIds.includes(player.id)) {
+          tile.type = "tower";
+          tile.owner = null;
+          tile.level = 1;
+          tile.ownerProgress = 0;
+          tile.invaderId = null;
+          tile.invaderProgress = 0;
+        }
 
-  tile.revealed = true;
-  player.points += REVEAL_POINTS;
-}
+        tile.revealed = true;
+        player.points += REVEAL_POINTS;
+      }
 
       handleTowerStep(player, tile, true);
 
@@ -691,6 +701,7 @@ if (wasHidden) {
       finalWinnerId = null;
       consecutiveStayTurns = 0;
       resetPressCount = 0;
+      cheatPlayerIds = [];
 
       document.getElementById("board").innerHTML = "";
       document.getElementById("scores").innerHTML = "";
