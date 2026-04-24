@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hidden Towers Board Game</title>
+  <title>Hidden Towers</title>
   <style>
     * { box-sizing: border-box; }
 
@@ -23,16 +23,12 @@
       text-align: center;
     }
 
-    h1 {
-      margin-bottom: 8px;
-    }
-
     .top {
       display: flex;
       justify-content: center;
       gap: 12px;
       flex-wrap: wrap;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
     }
 
     select, button {
@@ -49,9 +45,25 @@
     }
 
     .info {
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       font-size: 18px;
       font-weight: bold;
+    }
+
+    .scores {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .score {
+      padding: 8px 12px;
+      border-radius: 12px;
+      color: white;
+      font-weight: bold;
+      border: 2px solid white;
     }
 
     .board {
@@ -72,7 +84,6 @@
       border: 2px solid #2c3345;
       cursor: pointer;
       font-weight: bold;
-      font-size: clamp(14px, 2vw, 24px);
       display: grid;
       place-items: center;
       overflow: hidden;
@@ -90,49 +101,63 @@
     }
 
     .tower {
-  background: #7048e8;
-  color: white;
-}
+      color: white;
+    }
 
-.tower-number {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: clamp(26px, 4vw, 44px);
-  font-weight: 900;
-  line-height: 1;
-  pointer-events: none;
-}
+    .tower-number {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: clamp(24px, 4vw, 42px);
+      font-weight: 900;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .progress-wrap {
+      position: absolute;
+      left: 7px;
+      right: 7px;
+      bottom: 6px;
+      height: 7px;
+      background: rgba(255,255,255,0.35);
+      border-radius: 999px;
+      overflow: hidden;
+      z-index: 3;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: white;
+      border-radius: 999px;
+    }
 
     .players {
       position: absolute;
       inset: 0;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       gap: 3px;
       flex-wrap: wrap;
-      padding: 4px;
+      padding: 5px;
+      z-index: 4;
     }
 
     .piece {
-      width: 24px;
-      height: 24px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       border: 2px solid white;
       display: grid;
       place-items: center;
-      font-size: 13px;
+      font-size: 12px;
       color: white;
       text-shadow: 0 1px 2px black;
-      z-index: 2;
     }
-
-    .p0 { background: #e03131; }
-    .p1 { background: #1971c2; }
-    .p2 { background: #2f9e44; }
-    .p3 { background: #9c36b5; }
 
     .note {
       color: #cbd5e1;
@@ -152,15 +177,16 @@
         <option value="4">4 Players</option>
       </select>
       <button onclick="startGame()">Start Game</button>
+      <button onclick="stayTurn()">Stay</button>
       <button onclick="resetGame()">Reset</button>
     </div>
 
     <div class="info" id="info">Choose players and start.</div>
-
+    <div class="scores" id="scores"></div>
     <div class="board" id="board"></div>
 
     <div class="note">
-      Click an adjacent square to move. Hidden white squares reveal when stepped on.
+      Click an adjacent square to move. Use Stay when standing on a tower to level it up or capture it.
     </div>
   </div>
 
@@ -168,6 +194,9 @@
     const SIZE = 8;
     const TOWER_COUNT = 7;
     const MIN_DISTANCE = 5;
+    const MAX_TOWER_LEVEL = 8;
+
+    const PLAYER_COLORS = ["#e03131", "#1971c2", "#2f9e44", "#9c36b5"];
 
     let tiles = [];
     let players = [];
@@ -183,12 +212,16 @@
       for (let y = 0; y < SIZE; y++) {
         for (let x = 0; x < SIZE; x++) {
           tiles.push({
-  x,
-  y,
-  revealed: false,
-  type: "empty",
-  owner: undefined
-});
+            x,
+            y,
+            revealed: false,
+            type: "empty",
+            owner: null,
+            level: 1,
+            ownerProgress: 0,
+            invaderId: null,
+            invaderProgress: 0
+          });
         }
       }
 
@@ -198,7 +231,9 @@
         players.push({
           id: i,
           x: starts[i].x,
-          y: starts[i].y
+          y: starts[i].y,
+          color: PLAYER_COLORS[i],
+          points: 0
         });
 
         getTile(starts[i].x, starts[i].y).revealed = true;
@@ -224,9 +259,7 @@
           return manhattan(pos, other) >= MIN_DISTANCE;
         });
 
-        if (farEnough) {
-          positions.push(pos);
-        }
+        if (farEnough) positions.push(pos);
       }
 
       if (positions.length < count) {
@@ -259,6 +292,30 @@
     }
 
     function render() {
+      renderScores();
+      renderBoard();
+
+      if (players.length) {
+        document.getElementById("info").textContent = `Player ${currentPlayer + 1}'s turn`;
+      } else {
+        document.getElementById("info").textContent = "Choose players and start.";
+      }
+    }
+
+    function renderScores() {
+      const scores = document.getElementById("scores");
+      scores.innerHTML = "";
+
+      players.forEach(player => {
+        const div = document.createElement("div");
+        div.className = "score";
+        div.style.background = player.color;
+        div.textContent = `P${player.id + 1}: ${player.points} pts`;
+        scores.appendChild(div);
+      });
+    }
+
+    function renderBoard() {
       const board = document.getElementById("board");
       board.innerHTML = "";
 
@@ -271,19 +328,26 @@
         if (!tile.revealed) {
           div.className += "hidden";
         } else if (tile.type === "tower") {
+          div.className += "tower";
+          div.style.background = tile.owner !== null ? players[tile.owner].color : "#7048e8";
 
-  if (tile.owner !== undefined) {
-    const ownerColor = players[tile.owner].color;
-    div.style.background = ownerColor;
-  } else {
-    div.className += "tower";
-  }
+          const towerNumber = document.createElement("div");
+          towerNumber.className = "tower-number";
+          towerNumber.textContent = tile.level;
+          div.appendChild(towerNumber);
 
-  const towerNumber = document.createElement("div");
-  towerNumber.className = "tower-number";
-  towerNumber.textContent = "1";
-  div.appendChild(towerNumber);
-} else {
+          const progressWrap = document.createElement("div");
+          progressWrap.className = "progress-wrap";
+
+          const progressBar = document.createElement("div");
+          progressBar.className = "progress-bar";
+
+          const progressPercent = getTowerProgressPercent(tile);
+          progressBar.style.width = progressPercent + "%";
+
+          progressWrap.appendChild(progressBar);
+          div.appendChild(progressWrap);
+        } else {
           div.className += "revealed";
         }
 
@@ -294,7 +358,8 @@
 
         tilePlayers.forEach(p => {
           const piece = document.createElement("div");
-          piece.className = `piece p${p.id}`;
+          piece.className = "piece";
+          piece.style.background = p.color;
           piece.textContent = p.id + 1;
           playerLayer.appendChild(piece);
         });
@@ -302,9 +367,6 @@
         div.appendChild(playerLayer);
         board.appendChild(div);
       }
-
-      document.getElementById("info").textContent =
-        `Player ${currentPlayer + 1}'s turn`;
     }
 
     function moveTo(x, y) {
@@ -312,24 +374,95 @@
 
       const player = players[currentPlayer];
 
-      if (!isAdjacent(player.x, player.y, x, y)) {
-        return;
-      }
+      if (!isAdjacent(player.x, player.y, x, y)) return;
 
       player.x = x;
       player.y = y;
 
       const tile = getTile(x, y);
-tile.revealed = true;
+      tile.revealed = true;
 
-// If it's a tower, claim it
-if (tile.type === "tower" && tile.owner === undefined) {
-  tile.owner = player.id;
-}
+      handleTowerStep(player, tile, true);
+      nextTurn();
+    }
 
+    function stayTurn() {
+      if (!players.length) return;
+
+      const player = players[currentPlayer];
+      const tile = getTile(player.x, player.y);
+
+      if (!tile.revealed) tile.revealed = true;
+
+      handleTowerStep(player, tile, false);
+      nextTurn();
+    }
+
+    function handleTowerStep(player, tile, justMovedOntoTile) {
+      if (tile.type !== "tower") return;
+
+      if (tile.owner === null) {
+        tile.owner = player.id;
+        tile.level = 1;
+        tile.ownerProgress = 0;
+        tile.invaderId = null;
+        tile.invaderProgress = 0;
+        player.points += 50;
+        return;
+      }
+
+      if (tile.owner === player.id) {
+        tile.invaderId = null;
+        tile.invaderProgress = 0;
+
+        if (justMovedOntoTile) return;
+        if (tile.level >= MAX_TOWER_LEVEL) return;
+
+        tile.ownerProgress++;
+
+        const needed = tile.level;
+
+        if (tile.ownerProgress >= needed) {
+          tile.level++;
+          tile.ownerProgress = 0;
+        }
+
+        return;
+      }
+
+      tile.ownerProgress = 0;
+
+      if (tile.invaderId !== player.id) {
+        tile.invaderId = player.id;
+        tile.invaderProgress = 0;
+      }
+
+      tile.invaderProgress++;
+
+      if (tile.invaderProgress >= 5) {
+        tile.owner = player.id;
+        tile.invaderId = null;
+        tile.invaderProgress = 0;
+        tile.ownerProgress = 0;
+        player.points += 50;
+      }
+    }
+
+    function getTowerProgressPercent(tile) {
+      if (tile.owner === null) return 0;
+
+      if (tile.invaderId !== null) {
+        return Math.min(100, (tile.invaderProgress / 5) * 100);
+      }
+
+      if (tile.level >= MAX_TOWER_LEVEL) return 100;
+
+      return Math.min(100, (tile.ownerProgress / tile.level) * 100);
+    }
+
+    function nextTurn() {
       currentPlayer++;
       if (currentPlayer >= players.length) currentPlayer = 0;
-
       render();
     }
 
@@ -352,6 +485,7 @@ if (tile.type === "tower" && tile.owner === undefined) {
       players = [];
       currentPlayer = 0;
       document.getElementById("board").innerHTML = "";
+      document.getElementById("scores").innerHTML = "";
       document.getElementById("info").textContent = "Choose players and start.";
     }
   </script>
