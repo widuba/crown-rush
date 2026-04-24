@@ -2,242 +2,107 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Crown Rush: Riftlands</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <title>Hidden Towers Board Game</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: system-ui, Arial, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(255, 215, 120, 0.18), transparent 35%),
-        radial-gradient(circle at bottom right, rgba(88, 101, 242, 0.2), transparent 35%),
-        #10131f;
-      color: #f7f1dd;
+      font-family: Arial, sans-serif;
+      background: #151820;
+      color: white;
       min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
     }
 
     .app {
-      max-width: 1300px;
-      margin: 0 auto;
-      padding: 18px;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: center;
-      margin-bottom: 18px;
+      width: min(95vw, 850px);
+      text-align: center;
     }
 
     h1 {
-      margin: 0;
-      font-size: clamp(28px, 4vw, 48px);
-      letter-spacing: -1px;
+      margin-bottom: 8px;
     }
 
-    .subtitle {
-      color: #c9c0a7;
-      margin-top: 4px;
-      font-size: 15px;
+    .top {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
     }
 
-    button, select, input {
-      font: inherit;
+    select, button {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: none;
+      font-weight: bold;
     }
 
     button {
-      border: 0;
-      border-radius: 999px;
-      padding: 10px 16px;
-      background: linear-gradient(135deg, #ffd56a, #ff9f43);
-      color: #1a1207;
-      font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      background: #ffd166;
+      color: #1b1b1b;
     }
 
-    button:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-
-    .danger {
-      background: linear-gradient(135deg, #ff6b6b, #c92a2a);
-      color: white;
-    }
-
-    .secondary {
-      background: #252b3d;
-      color: #f7f1dd;
-      border: 1px solid #3a425c;
-    }
-
-    .setup {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
-      padding: 18px;
-      margin-bottom: 18px;
-      display: grid;
-      gap: 14px;
-    }
-
-    .setup-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-    }
-
-    select, input {
-      border-radius: 14px;
-      border: 1px solid #3a425c;
-      background: #171b2a;
-      color: #fff;
-      padding: 10px 12px;
-    }
-
-    .game {
-      display: none;
-      grid-template-columns: 280px 1fr 310px;
-      gap: 16px;
-      align-items: start;
-    }
-
-    .panel {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
-      padding: 16px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-    }
-
-    .panel h2 {
-      margin: 0 0 12px;
-      font-size: 20px;
-    }
-
-    .player-card {
-      border-radius: 18px;
-      padding: 12px;
-      margin-bottom: 10px;
-      background: #171b2a;
-      border: 2px solid transparent;
-    }
-
-    .player-card.active {
-      border-color: #ffd56a;
-      box-shadow: 0 0 18px rgba(255,213,106,0.25);
-    }
-
-    .player-name {
-      font-weight: 900;
+    .info {
+      margin-bottom: 14px;
       font-size: 18px;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-      margin-top: 8px;
-      font-size: 14px;
-    }
-
-    .stat {
-      background: rgba(255,255,255,0.07);
-      padding: 7px;
-      border-radius: 12px;
-    }
-
-    .board-wrap {
-      display: grid;
-      place-items: center;
+      font-weight: bold;
     }
 
     .board {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      background: #0b0d12;
+      padding: 8px;
+      border-radius: 16px;
+      margin: 0 auto;
       width: min(92vw, 640px);
       aspect-ratio: 1 / 1;
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      grid-template-rows: repeat(7, 1fr);
-      gap: 6px;
-      background: rgba(255,255,255,0.05);
-      padding: 8px;
-      border-radius: 24px;
-      border: 1px solid rgba(255,255,255,0.1);
     }
 
     .tile {
-      border-radius: 15px;
-      border: 2px solid rgba(255,255,255,0.12);
-      background: #23283a;
-      color: white;
       position: relative;
+      border-radius: 10px;
+      border: 2px solid #2c3345;
       cursor: pointer;
-      min-width: 0;
+      font-weight: bold;
+      font-size: clamp(14px, 2vw, 24px);
+      display: grid;
+      place-items: center;
       overflow: hidden;
-      transition: transform 0.12s, border-color 0.12s;
     }
 
-    .tile:hover {
-      transform: translateY(-2px);
-      border-color: #ffd56a;
+    .hidden {
+      background: #ffffff;
+      color: transparent;
+      border-color: #e5e5e5;
     }
 
-    .tile.selected {
-      outline: 3px solid #ffd56a;
+    .revealed {
+      background: #2d3748;
+      color: white;
     }
 
-    .tile.village { background: linear-gradient(135deg, #305f46, #173827); }
-    .tile.mine { background: linear-gradient(135deg, #76613d, #3a2c18); }
-    .tile.tower { background: linear-gradient(135deg, #3c5477, #202d44); }
-    .tile.rift { background: linear-gradient(135deg, #6f42c1, #28124d); }
-    .tile.forest { background: linear-gradient(135deg, #244d3b, #13271e); }
-    .tile.vault { background: linear-gradient(135deg, #ffd56a, #9b5c00); color: #1a1207; }
-
-    .tile-type {
-      position: absolute;
-      top: 5px;
-      left: 6px;
-      font-size: 11px;
-      font-weight: 900;
-      text-transform: uppercase;
-      opacity: 0.9;
+    .tower {
+      background: #7048e8;
+      color: white;
     }
 
-    .tile-level {
-      position: absolute;
-      bottom: 5px;
-      left: 6px;
-      font-size: 12px;
-      font-weight: 900;
-    }
-
-    .owner-dot {
-      position: absolute;
-      right: 6px;
-      top: 6px;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      border: 2px solid white;
-    }
-
-    .pieces {
+    .players {
       position: absolute;
       inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 2px;
+      gap: 3px;
       flex-wrap: wrap;
-      padding-top: 16px;
+      padding: 4px;
     }
 
     .piece {
@@ -247,702 +112,220 @@
       border: 2px solid white;
       display: grid;
       place-items: center;
-      font-size: 12px;
-      font-weight: 900;
+      font-size: 13px;
       color: white;
       text-shadow: 0 1px 2px black;
+      z-index: 2;
     }
 
-    .actions {
-      display: grid;
-      gap: 9px;
-    }
+    .p0 { background: #e03131; }
+    .p1 { background: #1971c2; }
+    .p2 { background: #2f9e44; }
+    .p3 { background: #9c36b5; }
 
-    .actions button {
-      width: 100%;
-    }
-
-    .log {
-      max-height: 260px;
-      overflow: auto;
-      display: grid;
-      gap: 8px;
+    .note {
+      color: #cbd5e1;
+      margin-top: 14px;
       font-size: 14px;
-      color: #d8d0bc;
-    }
-
-    .log-entry {
-      background: rgba(255,255,255,0.06);
-      border-radius: 12px;
-      padding: 8px;
-    }
-
-    .card-list {
-      display: grid;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .game-card {
-      background: #171b2a;
-      border: 1px solid #3a425c;
-      border-radius: 14px;
-      padding: 10px;
-    }
-
-    .game-card strong {
-      display: block;
-      color: #ffd56a;
-      margin-bottom: 3px;
-    }
-
-    .help {
-      font-size: 14px;
-      color: #c9c0a7;
-      line-height: 1.45;
-    }
-
-    .winner {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.75);
-      z-index: 10;
-      place-items: center;
-      padding: 20px;
-    }
-
-    .winner-box {
-      background: #171b2a;
-      border: 2px solid #ffd56a;
-      border-radius: 28px;
-      max-width: 520px;
-      padding: 28px;
-      text-align: center;
-      box-shadow: 0 20px 80px rgba(0,0,0,0.5);
-    }
-
-    .winner-box h2 {
-      font-size: 38px;
-      margin: 0 0 10px;
-    }
-
-    @media (max-width: 1050px) {
-      .game {
-        grid-template-columns: 1fr;
-      }
-
-      .board {
-        width: min(96vw, 640px);
-      }
     }
   </style>
 </head>
-
 <body>
   <div class="app">
-    <header>
-      <div>
-        <h1>Crown Rush: Riftlands</h1>
-        <div class="subtitle">A local pass-and-play strategy board game</div>
-      </div>
-      <button class="danger" onclick="resetGame()">Reset</button>
-    </header>
+    <h1>Hidden Towers</h1>
 
-    <section class="setup" id="setup">
-      <h2>Start Game</h2>
-      <div class="setup-row">
-        <label>Players:</label>
-        <select id="playerCount">
-          <option value="2">2 Players</option>
-          <option value="3">3 Players</option>
-          <option value="4">4 Players</option>
-        </select>
+    <div class="top">
+      <select id="playerCount">
+        <option value="2">2 Players</option>
+        <option value="3">3 Players</option>
+        <option value="4">4 Players</option>
+      </select>
+      <button onclick="startGame()">Start Game</button>
+      <button onclick="resetGame()">Reset</button>
+    </div>
 
-        <label>Win Crowns:</label>
-        <select id="winCrowns">
-          <option value="15">15</option>
-          <option value="20" selected>20</option>
-          <option value="25">25</option>
-        </select>
+    <div class="info" id="info">Choose players and start.</div>
 
-        <button onclick="startGame()">Start</button>
-      </div>
+    <div class="board" id="board"></div>
 
-      <p class="help">
-        Each player gets 5 energy per turn. Move, claim tiles, upgrade territory, attack rivals, draw cards, and survive random Riftland events.
-      </p>
-    </section>
-
-    <main class="game" id="game">
-      <aside class="panel">
-        <h2>Players</h2>
-        <div id="players"></div>
-
-        <h2>Current Turn</h2>
-        <div class="help" id="turnInfo"></div>
-      </aside>
-
-      <section class="board-wrap">
-        <div class="board" id="board"></div>
-      </section>
-
-      <aside class="panel">
-        <h2>Actions</h2>
-        <div class="actions">
-          <button onclick="setMode('move')">Move</button>
-          <button onclick="setMode('claim')">Claim Tile</button>
-          <button onclick="setMode('upgrade')">Upgrade Tile</button>
-          <button onclick="setMode('attack')">Attack</button>
-          <button onclick="drawCard()">Draw Card</button>
-          <button onclick="useHeroPower()">Use Hero Power</button>
-          <button class="secondary" onclick="endTurn()">End Turn</button>
-        </div>
-
-        <h2 style="margin-top:18px;">Your Cards</h2>
-        <div id="cards" class="card-list"></div>
-
-        <h2 style="margin-top:18px;">Event Log</h2>
-        <div id="log" class="log"></div>
-      </aside>
-    </main>
-  </div>
-
-  <div class="winner" id="winner">
-    <div class="winner-box">
-      <h2 id="winnerTitle"></h2>
-      <p id="winnerText"></p>
-      <button onclick="resetGame()">Play Again</button>
+    <div class="note">
+      Click an adjacent square to move. Hidden white squares reveal when stepped on.
     </div>
   </div>
 
   <script>
-    const BOARD_SIZE = 7;
+    const SIZE = 8;
+    const TOWER_COUNT = 7;
+    const MIN_DISTANCE = 5;
 
-    const HEROES = [
-      { name: "Knight", power: "Wins tied battles", bonus: "tie" },
-      { name: "Rogue", power: "Steals 2 crowns after winning attacks", bonus: "steal" },
-      { name: "Mage", power: "Teleport to any tile for 2 energy", bonus: "teleport" },
-      { name: "Builder", power: "Upgrades cost 1 less gold", bonus: "build" }
-    ];
-
-    const COLORS = ["#ff4d4d", "#4dabf7", "#51cf66", "#cc5de8"];
-
-    const TILE_TYPES = [
-      "village", "village", "village",
-      "mine", "mine",
-      "tower", "tower",
-      "forest", "forest",
-      "rift"
-    ];
-
-    const CARD_DECK = [
-      { name: "Ambush", text: "+3 in your next battle", type: "battle", value: 3 },
-      { name: "Royal Tax", text: "Gain 3 gold", type: "gold", value: 3 },
-      { name: "Shortcut", text: "Move to any adjacent tile for free", type: "freeMove", value: 1 },
-      { name: "Sabotage", text: "Remove one enemy claim from a selected tile", type: "sabotage", value: 1 },
-      { name: "Fortify", text: "Add +1 level to one owned tile for free", type: "fortify", value: 1 },
-      { name: "Crown Spark", text: "Gain 2 crowns", type: "crowns", value: 2 }
-    ];
-
-    let state = null;
-    let mode = "move";
+    let tiles = [];
+    let players = [];
+    let currentPlayer = 0;
 
     function startGame() {
       const count = Number(document.getElementById("playerCount").value);
-      const winCrowns = Number(document.getElementById("winCrowns").value);
 
-      const players = [];
+      tiles = [];
+      players = [];
+      currentPlayer = 0;
 
-      for (let i = 0; i < count; i++) {
-        players.push({
-          id: i,
-          name: `Player ${i + 1}`,
-          hero: HEROES[i],
-          color: COLORS[i],
-          crowns: 5,
-          gold: 5,
-          energy: 5,
-          position: getStartPosition(i),
-          cards: [],
-          battleBonus: 0
-        });
-      }
-
-      state = {
-        players,
-        current: 0,
-        round: 1,
-        winCrowns,
-        board: createBoard(),
-        log: ["Game started. Claim territory and race for crowns."]
-      };
-
-      document.getElementById("setup").style.display = "none";
-      document.getElementById("game").style.display = "grid";
-      render();
-    }
-
-    function createBoard() {
-      const board = [];
-
-      for (let y = 0; y < BOARD_SIZE; y++) {
-        for (let x = 0; x < BOARD_SIZE; x++) {
-          let type = TILE_TYPES[Math.floor(Math.random() * TILE_TYPES.length)];
-
-          if (x === 3 && y === 3) type = "vault";
-
-          board.push({
+      for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+          tiles.push({
             x,
             y,
-            type,
-            owner: null,
-            level: 1
+            revealed: false,
+            type: "empty"
           });
         }
       }
 
-      return board;
+      const starts = generateStartPositions(count);
+
+      for (let i = 0; i < count; i++) {
+        players.push({
+          id: i,
+          x: starts[i].x,
+          y: starts[i].y
+        });
+
+        getTile(starts[i].x, starts[i].y).revealed = true;
+      }
+
+      placeTowers(starts);
+      render();
     }
 
-    function getStartPosition(i) {
-      const spots = [
-        { x: 0, y: 0 },
-        { x: 6, y: 6 },
-        { x: 6, y: 0 },
-        { x: 0, y: 6 }
-      ];
-      return spots[i];
+    function generateStartPositions(count) {
+      const positions = [];
+      let attempts = 0;
+
+      while (positions.length < count && attempts < 5000) {
+        attempts++;
+
+        const pos = {
+          x: Math.floor(Math.random() * SIZE),
+          y: Math.floor(Math.random() * SIZE)
+        };
+
+        const farEnough = positions.every(other => {
+          return manhattan(pos, other) >= MIN_DISTANCE;
+        });
+
+        if (farEnough) {
+          positions.push(pos);
+        }
+      }
+
+      if (positions.length < count) {
+        return [
+          { x: 0, y: 0 },
+          { x: 7, y: 7 },
+          { x: 7, y: 0 },
+          { x: 0, y: 7 }
+        ].slice(0, count);
+      }
+
+      return positions;
     }
 
-    function currentPlayer() {
-      return state.players[state.current];
-    }
+    function placeTowers(startPositions) {
+      let placed = 0;
 
-    function getTile(x, y) {
-      return state.board.find(t => t.x === x && t.y === y);
-    }
+      while (placed < TOWER_COUNT) {
+        const x = Math.floor(Math.random() * SIZE);
+        const y = Math.floor(Math.random() * SIZE);
 
-    function getTileIndex(x, y) {
-      return state.board.findIndex(t => t.x === x && t.y === y);
+        const isStart = startPositions.some(pos => pos.x === x && pos.y === y);
+        const tile = getTile(x, y);
+
+        if (!isStart && tile.type !== "tower") {
+          tile.type = "tower";
+          placed++;
+        }
+      }
     }
 
     function render() {
-      renderPlayers();
-      renderBoard();
-      renderTurnInfo();
-      renderCards();
-      renderLog();
-      checkWinner();
-    }
-
-    function renderPlayers() {
-      const box = document.getElementById("players");
-      box.innerHTML = "";
-
-      state.players.forEach((p, index) => {
-        box.innerHTML += `
-          <div class="player-card ${index === state.current ? "active" : ""}">
-            <div class="player-name" style="color:${p.color};">${p.name}</div>
-            <div class="help">${p.hero.name}: ${p.hero.power}</div>
-            <div class="stats">
-              <div class="stat">Crowns: <b>${p.crowns}</b></div>
-              <div class="stat">Gold: <b>${p.gold}</b></div>
-              <div class="stat">Energy: <b>${p.energy}</b></div>
-              <div class="stat">Cards: <b>${p.cards.length}</b></div>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    function renderBoard() {
       const board = document.getElementById("board");
       board.innerHTML = "";
 
-      state.board.forEach(tile => {
-        const pieces = state.players.filter(p => p.position.x === tile.x && p.position.y === tile.y);
-        const owner = tile.owner !== null ? state.players[tile.owner] : null;
+      for (const tile of tiles) {
+        const tilePlayers = players.filter(p => p.x === tile.x && p.y === tile.y);
 
-        const pieceHTML = pieces.map(p => `
-          <div class="piece" style="background:${p.color};">${p.id + 1}</div>
-        `).join("");
+        const div = document.createElement("div");
+        div.className = "tile ";
 
-        board.innerHTML += `
-          <button class="tile ${tile.type}" onclick="tileClick(${tile.x}, ${tile.y})">
-            <div class="tile-type">${tile.type}</div>
-            ${owner ? `<div class="owner-dot" style="background:${owner.color};"></div>` : ""}
-            <div class="pieces">${pieceHTML}</div>
-            <div class="tile-level">L${tile.level}</div>
-          </button>
-        `;
-      });
+        if (!tile.revealed) {
+          div.className += "hidden";
+        } else if (tile.type === "tower") {
+          div.className += "tower";
+          div.textContent = "♜";
+        } else {
+          div.className += "revealed";
+        }
+
+        div.onclick = () => moveTo(tile.x, tile.y);
+
+        const playerLayer = document.createElement("div");
+        playerLayer.className = "players";
+
+        tilePlayers.forEach(p => {
+          const piece = document.createElement("div");
+          piece.className = `piece p${p.id}`;
+          piece.textContent = p.id + 1;
+          playerLayer.appendChild(piece);
+        });
+
+        div.appendChild(playerLayer);
+        board.appendChild(div);
+      }
+
+      document.getElementById("info").textContent =
+        `Player ${currentPlayer + 1}'s turn`;
     }
 
-    function renderTurnInfo() {
-      const p = currentPlayer();
-      document.getElementById("turnInfo").innerHTML = `
-        <b style="color:${p.color};">${p.name}</b><br>
-        Hero: ${p.hero.name}<br>
-        Round: ${state.round}<br>
-        Mode: <b>${mode}</b>
-      `;
-    }
+    function moveTo(x, y) {
+      if (!players.length) return;
 
-    function renderCards() {
-      const box = document.getElementById("cards");
-      const p = currentPlayer();
+      const player = players[currentPlayer];
 
-      if (p.cards.length === 0) {
-        box.innerHTML = `<div class="help">No cards yet.</div>`;
+      if (!isAdjacent(player.x, player.y, x, y)) {
         return;
       }
 
-      box.innerHTML = p.cards.map((card, i) => `
-        <div class="game-card">
-          <strong>${card.name}</strong>
-          <div class="help">${card.text}</div>
-          <button style="margin-top:8px;" onclick="useCard(${i})">Use</button>
-        </div>
-      `).join("");
-    }
+      player.x = x;
+      player.y = y;
 
-    function renderLog() {
-      document.getElementById("log").innerHTML = state.log.slice(-14).reverse().map(entry => `
-        <div class="log-entry">${entry}</div>
-      `).join("");
-    }
-
-    function setMode(newMode) {
-      mode = newMode;
-      render();
-    }
-
-    function tileClick(x, y) {
-      const p = currentPlayer();
       const tile = getTile(x, y);
+      tile.revealed = true;
 
-      if (mode === "move") movePlayer(p, x, y);
-      if (mode === "claim") claimTile(p, tile);
-      if (mode === "upgrade") upgradeTile(p, tile);
-      if (mode === "attack") attackTile(p, tile);
+      currentPlayer++;
+      if (currentPlayer >= players.length) currentPlayer = 0;
 
       render();
     }
 
-    function isAdjacent(a, b) {
-      const dx = Math.abs(a.x - b.x);
-      const dy = Math.abs(a.y - b.y);
+    function isAdjacent(x1, y1, x2, y2) {
+      const dx = Math.abs(x1 - x2);
+      const dy = Math.abs(y1 - y2);
       return dx + dy === 1;
     }
 
-    function movePlayer(p, x, y) {
-      if (p.energy < 1) return log("Not enough energy.");
-
-      if (!isAdjacent(p.position, { x, y })) {
-        return log("You can only move one tile.");
-      }
-
-      p.position = { x, y };
-      p.energy -= 1;
-
-      const tile = getTile(x, y);
-      log(`${p.name} moved to ${tile.type}.`);
-
-      if (tile.type === "rift") triggerRift(p);
+    function getTile(x, y) {
+      return tiles.find(tile => tile.x === x && tile.y === y);
     }
 
-    function claimTile(p, tile) {
-      if (p.energy < 2) return log("Claiming costs 2 energy.");
-      if (tile.owner === p.id) return log("You already own this tile.");
-      if (tile.owner !== null) return log("Enemy tile. Attack or sabotage it first.");
-      if (p.position.x !== tile.x || p.position.y !== tile.y) return log("You must stand on a tile to claim it.");
-
-      tile.owner = p.id;
-      p.energy -= 2;
-      log(`${p.name} claimed a ${tile.type}.`);
-    }
-
-    function upgradeTile(p, tile) {
-      if (tile.owner !== p.id) return log("You can only upgrade your own tile.");
-      if (tile.level >= 3) return log("Tile is already max level.");
-
-      const cost = p.hero.bonus === "build" ? 2 : 3;
-
-      if (p.gold < cost) return log(`Upgrade costs ${cost} gold.`);
-
-      p.gold -= cost;
-      tile.level += 1;
-      log(`${p.name} upgraded ${tile.type} to level ${tile.level}.`);
-    }
-
-    function attackTile(p, tile) {
-      if (p.energy < 2) return log("Attack costs 2 energy.");
-
-      const defender = state.players.find(other =>
-        other.id !== p.id &&
-        other.position.x === tile.x &&
-        other.position.y === tile.y
-      );
-
-      if (!defender) return log("No enemy on that tile.");
-      if (!isAdjacent(p.position, defender.position)) return log("Enemy must be adjacent.");
-
-      p.energy -= 2;
-
-      const attackRoll = rollDie();
-      const defenseRoll = rollDie();
-
-      const attackPower = attackRoll + p.battleBonus + getOwnedBonus(p);
-      const defensePower = defenseRoll + getTileDefense(defender, tile);
-
-      p.battleBonus = 0;
-
-      if (attackPower > defensePower || (attackPower === defensePower && p.hero.bonus === "tie")) {
-        const stolen = p.hero.bonus === "steal" ? 2 : 1;
-        const amount = Math.min(stolen, defender.crowns);
-
-        defender.crowns -= amount;
-        p.crowns += amount;
-        defender.position = getStartPosition(defender.id);
-
-        log(`${p.name} won battle ${attackPower}-${defensePower} and stole ${amount} crown(s).`);
-      } else {
-        log(`${p.name} lost battle ${attackPower}-${defensePower}.`);
-      }
-    }
-
-    function getTileDefense(player, tile) {
-      let bonus = 0;
-      if (tile.owner === player.id) bonus += tile.level;
-      if (tile.type === "tower" && tile.owner === player.id) bonus += 2;
-      return bonus;
-    }
-
-    function getOwnedBonus(player) {
-      const owned = state.board.filter(t => t.owner === player.id).length;
-      if (owned >= 5) return 2;
-      if (owned >= 3) return 1;
-      return 0;
-    }
-
-    function drawCard() {
-      const p = currentPlayer();
-      if (p.energy < 1) return log("Drawing costs 1 energy.");
-
-      const card = CARD_DECK[Math.floor(Math.random() * CARD_DECK.length)];
-      p.cards.push({ ...card });
-      p.energy -= 1;
-
-      log(`${p.name} drew a card.`);
-      render();
-    }
-
-    function useCard(index) {
-      const p = currentPlayer();
-      const card = p.cards[index];
-
-      if (!card) return;
-
-      if (card.type === "battle") {
-        p.battleBonus += card.value;
-        log(`${p.name} prepared Ambush: +${card.value} battle power.`);
-      }
-
-      if (card.type === "gold") {
-        p.gold += card.value;
-        log(`${p.name} gained ${card.value} gold.`);
-      }
-
-      if (card.type === "crowns") {
-        p.crowns += card.value;
-        log(`${p.name} gained ${card.value} crowns.`);
-      }
-
-      if (card.type === "fortify") {
-        const owned = state.board.find(t => t.owner === p.id && t.level < 3);
-        if (owned) {
-          owned.level += 1;
-          log(`${p.name} fortified a ${owned.type}.`);
-        } else {
-          log("No owned tile can be fortified.");
-        }
-      }
-
-      if (card.type === "sabotage") {
-        const enemyTile = state.board.find(t => t.owner !== null && t.owner !== p.id);
-        if (enemyTile) {
-          enemyTile.owner = null;
-          enemyTile.level = 1;
-          log(`${p.name} sabotaged an enemy tile.`);
-        } else {
-          log("No enemy tile to sabotage.");
-        }
-      }
-
-      if (card.type === "freeMove") {
-        log(`${p.name} may use Move mode without losing energy next time. For now, gain 1 energy back.`);
-        p.energy += 1;
-      }
-
-      p.cards.splice(index, 1);
-      render();
-    }
-
-    function useHeroPower() {
-      const p = currentPlayer();
-
-      if (p.hero.bonus === "teleport") {
-        if (p.energy < 2) return log("Teleport costs 2 energy.");
-
-        const tile = state.board[Math.floor(Math.random() * state.board.length)];
-        p.position = { x: tile.x, y: tile.y };
-        p.energy -= 2;
-        log(`${p.name} teleported through the Rift.`);
-      } else {
-        log(`${p.hero.name} has a passive power.`);
-      }
-
-      render();
-    }
-
-    function endTurn() {
-      collectIncome(currentPlayer());
-
-      state.current++;
-
-      if (state.current >= state.players.length) {
-        state.current = 0;
-        state.round++;
-        triggerRoundEvent();
-      }
-
-      currentPlayer().energy = 5;
-      mode = "move";
-
-      render();
-    }
-
-    function collectIncome(p) {
-      let crowns = 0;
-      let gold = 0;
-
-      state.board.forEach(tile => {
-        if (tile.owner !== p.id) return;
-
-        if (tile.type === "village") crowns += tile.level;
-        if (tile.type === "mine") gold += tile.level + 1;
-        if (tile.type === "vault") crowns += 2 + tile.level;
-        if (tile.type === "forest") gold += 1;
-      });
-
-      const connected = state.board.filter(t => t.owner === p.id).length;
-      if (connected >= 5) crowns += 2;
-      else if (connected >= 3) crowns += 1;
-
-      p.crowns += crowns;
-      p.gold += gold;
-
-      if (crowns || gold) {
-        log(`${p.name} income: +${crowns} crowns, +${gold} gold.`);
-      }
-    }
-
-    function triggerRoundEvent() {
-      const events = [
-        "meteor",
-        "tax",
-        "festival",
-        "storm",
-        "growth"
-      ];
-
-      const event = events[Math.floor(Math.random() * events.length)];
-
-      if (event === "meteor") {
-        const owned = state.board.filter(t => t.owner !== null);
-        if (owned.length) {
-          const tile = owned[Math.floor(Math.random() * owned.length)];
-          tile.owner = null;
-          tile.level = 1;
-          log("Round Event: Meteor destroyed a claimed tile.");
-        }
-      }
-
-      if (event === "tax") {
-        const richest = [...state.players].sort((a, b) => b.crowns - a.crowns)[0];
-        const loss = Math.min(2, richest.crowns);
-        richest.crowns -= loss;
-        log(`Round Event: Crown Tax. ${richest.name} lost ${loss} crowns.`);
-      }
-
-      if (event === "festival") {
-        const poorest = [...state.players].sort((a, b) => a.crowns - b.crowns)[0];
-        poorest.crowns += 3;
-        log(`Round Event: Festival. ${poorest.name} gained 3 crowns.`);
-      }
-
-      if (event === "storm") {
-        state.players.forEach(p => {
-          const tile = state.board[Math.floor(Math.random() * state.board.length)];
-          p.position = { x: tile.x, y: tile.y };
-        });
-        log("Round Event: Portal Storm moved every player.");
-      }
-
-      if (event === "growth") {
-        const tile = state.board.find(t => t.owner !== null && t.level < 3);
-        if (tile) {
-          tile.level++;
-          log("Round Event: Wild Growth upgraded a random claimed tile.");
-        }
-      }
-    }
-
-    function triggerRift(p) {
-      const effects = [
-        () => {
-          p.gold += 2;
-          log(`${p.name} found 2 gold in the Rift.`);
-        },
-        () => {
-          p.crowns += 1;
-          log(`${p.name} gained 1 crown from the Rift.`);
-        },
-        () => {
-          p.energy = Math.max(0, p.energy - 1);
-          log(`${p.name} lost 1 energy to the Rift.`);
-        },
-        () => {
-          const tile = state.board[Math.floor(Math.random() * state.board.length)];
-          p.position = { x: tile.x, y: tile.y };
-          log(`${p.name} was warped by the Rift.`);
-        }
-      ];
-
-      effects[Math.floor(Math.random() * effects.length)]();
-    }
-
-    function checkWinner() {
-      const winner = state.players.find(p => p.crowns >= state.winCrowns);
-
-      if (!winner) return;
-
-      document.getElementById("winner").style.display = "grid";
-      document.getElementById("winnerTitle").textContent = `${winner.name} Wins!`;
-      document.getElementById("winnerText").textContent = `${winner.name} reached ${winner.crowns} crowns as the ${winner.hero.name}.`;
-    }
-
-    function rollDie() {
-      return Math.floor(Math.random() * 6) + 1;
-    }
-
-    function log(text) {
-      state.log.push(text);
+    function manhattan(a, b) {
+      return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
 
     function resetGame() {
-      location.reload();
+      tiles = [];
+      players = [];
+      currentPlayer = 0;
+      document.getElementById("board").innerHTML = "";
+      document.getElementById("info").textContent = "Choose players and start.";
     }
   </script>
 </body>
