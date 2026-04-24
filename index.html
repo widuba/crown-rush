@@ -247,6 +247,7 @@
       <h2 id="winnerTitle"></h2>
       <p id="winnerReason"></p>
       <div class="ranking" id="finalRanking"></div>
+      <button onclick="hideGameOver()">Hide Final Screen</button>
       <button onclick="resetGame()">Play Again</button>
     </div>
   </div>
@@ -699,6 +700,10 @@ document.addEventListener("keydown", function(event) {
     }
   }
 });
+
+    function hideGameOver() {
+  document.getElementById("gameOver").style.display = "none";
+}
   </script>
 </body>
 </html>
