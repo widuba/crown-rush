@@ -459,8 +459,8 @@
     }
 
     function moveTo(x, y) {
-      if (!players.length || gameEnded) return;
-
+  if (!players.length || gameEnded) return;
+  if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) return;
       const player = players[currentPlayer];
 
       if (!isAdjacent(player.x, player.y, x, y)) return;
