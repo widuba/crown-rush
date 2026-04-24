@@ -183,11 +183,12 @@
       for (let y = 0; y < SIZE; y++) {
         for (let x = 0; x < SIZE; x++) {
           tiles.push({
-            x,
-            y,
-            revealed: false,
-            type: "empty"
-          });
+  x,
+  y,
+  revealed: false,
+  type: "empty",
+  owner: undefined
+});
         }
       }
 
