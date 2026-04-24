@@ -313,7 +313,12 @@
       player.y = y;
 
       const tile = getTile(x, y);
-      tile.revealed = true;
+tile.revealed = true;
+
+// If it's a tower, claim it
+if (tile.type === "tower" && tile.owner === undefined) {
+  tile.owner = player.id;
+}
 
       currentPlayer++;
       if (currentPlayer >= players.length) currentPlayer = 0;
