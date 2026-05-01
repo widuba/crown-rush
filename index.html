@@ -823,8 +823,12 @@
         expansions = 2;
       }
 
-      if (gasRound >= 5) {
-        expansions = 6;
+      if (gasRound === 5) {
+        expansions = 3;
+      }
+
+      if (gasRound > 5) {
+        return;
       }
 
       for (let i = 0; i < expansions; i++) {
