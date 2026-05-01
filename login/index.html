@@ -169,6 +169,23 @@
       color: white;
     }
 
+    .safe-infected {
+      color: white;
+    }
+
+    .safe-letter {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: clamp(22px, 4vw, 38px);
+      font-weight: 900;
+      color: white;
+      z-index: 2;
+      pointer-events: none;
+      text-shadow: 0 2px 4px black;
+    }
+
     .gas-mark {
       position: absolute;
       inset: 0;
@@ -668,7 +685,9 @@
         gasOrigin: null,
         gasActive: false,
         infectedTiles: [],
+        infectionSafeZones: {},
         gasRound: 0,
+        gasFinalized: false,
         gameOverReason: ""
       };
     }
@@ -745,7 +764,9 @@
       next.gasOrigin = null;
       next.gasActive = false;
       next.infectedTiles = [];
+      next.infectionSafeZones = {};
       next.gasRound = 0;
+      next.gasFinalized = false;
       next.gameOverReason = "";
 
       await saveState(next);
@@ -923,7 +944,19 @@
         }
 
         if ((state.infectedTiles || []).includes(key) && !(state.gasOrigin && state.gasOrigin.x === tile.x && state.gasOrigin.y === tile.y)) {
-          div.className += " infected";
+          const safeIds = getSafeIdsForKey(state, key);
+
+          if (safeIds.length > 0) {
+            div.className += " safe-infected";
+            applySafeTileVisual(div, safeIds);
+
+            const safeLetter = document.createElement("div");
+            safeLetter.className = "safe-letter";
+            safeLetter.textContent = safeIds.map(id => getPlayerInitialById(state, id)).join("");
+            div.appendChild(safeLetter);
+          } else {
+            div.className += " infected";
+          }
         }
 
         if (!isMyTurn() || state.status !== "playing") {
@@ -992,6 +1025,7 @@
       }
 
       handleTowerStep(next, player, tile, true);
+      if (next.gasFinalized) rebuildInfectionSafeZones(next);
       handleInfection(next, player);
 
       next.consecutiveStayTurns = 0;
@@ -1019,6 +1053,7 @@
       const tile = getTileFrom(next.tiles, player.x, player.y);
 
       handleTowerStep(next, player, tile, false);
+      if (next.gasFinalized) rebuildInfectionSafeZones(next);
       handleInfection(next, player);
 
       next.consecutiveStayTurns++;
@@ -1093,6 +1128,7 @@
       const key = tileKey(player.x, player.y);
       if (!(s.infectedTiles || []).includes(key)) return;
       if (s.gasOrigin && player.x === s.gasOrigin.x && player.y === s.gasOrigin.y) return;
+      if (isSafeForPlayer(s, key, player.id)) return;
 
       player.infected = true;
     }
@@ -1105,7 +1141,13 @@
       let expansions = 1;
       if (s.gasRound === 3 || s.gasRound === 4) expansions = 2;
       if (s.gasRound === 5) expansions = 3;
-      if (s.gasRound > 5) return;
+      if (s.gasRound > 5) {
+        if (!s.gasFinalized) {
+          s.gasFinalized = true;
+          rebuildInfectionSafeZones(s);
+        }
+        return;
+      }
 
       for (let i = 0; i < expansions; i++) {
         const possible = [];
@@ -1138,7 +1180,84 @@
         }
       }
 
+      if (s.gasRound === 5) {
+        s.gasFinalized = true;
+        rebuildInfectionSafeZones(s);
+      }
+
       s.players.forEach(player => handleInfection(s, player));
+    }
+
+    function rebuildInfectionSafeZones(s) {
+      const safe = {};
+      const infectedSet = new Set(s.infectedTiles || []);
+
+      (s.tiles || []).forEach(tile => {
+        if (tile.type !== "tower" || tile.owner === null || tile.owner === undefined) return;
+
+        const directions = [
+          { dx: 0, dy: -1 },
+          { dx: 0, dy: 1 },
+          { dx: -1, dy: 0 },
+          { dx: 1, dy: 0 }
+        ];
+
+        directions.forEach(dir => {
+          let x = tile.x + dir.dx;
+          let y = tile.y + dir.dy;
+
+          while (x >= 0 && y >= 0 && x < s.size && y < s.size) {
+            const key = tileKey(x, y);
+            const isOrigin = s.gasOrigin && s.gasOrigin.x === x && s.gasOrigin.y === y;
+
+            if (infectedSet.has(key) && !isOrigin) {
+              if (!safe[key]) safe[key] = [];
+              if (!safe[key].includes(tile.owner)) safe[key].push(tile.owner);
+            }
+
+            x += dir.dx;
+            y += dir.dy;
+          }
+        });
+      });
+
+      s.infectionSafeZones = safe;
+    }
+
+    function getSafeIdsForKey(s, key) {
+      const zones = s.infectionSafeZones || {};
+      return Array.isArray(zones[key]) ? zones[key] : [];
+    }
+
+    function isSafeForPlayer(s, key, playerId) {
+      return getSafeIdsForKey(s, key).includes(playerId);
+    }
+
+    function getPlayerInitialById(s, id) {
+      const player = (s.players || []).find(p => p.id === id);
+      return player ? player.username.charAt(0).toUpperCase() : "?";
+    }
+
+    function getPlayerColorById(s, id) {
+      const player = (s.players || []).find(p => p.id === id);
+      return player ? player.color : "#2ecc71";
+    }
+
+    function applySafeTileVisual(div, safeIds) {
+      if (safeIds.length === 1) {
+        div.style.background = getPlayerColorById(state, safeIds[0]);
+        return;
+      }
+
+      const colors = safeIds.map(id => getPlayerColorById(state, id));
+      const step = 100 / colors.length;
+      const parts = colors.map((color, index) => {
+        const start = Math.round(index * step);
+        const end = Math.round((index + 1) * step);
+        return `${color} ${start}% ${end}%`;
+      });
+
+      div.style.background = `linear-gradient(135deg, ${parts.join(", ")})`;
     }
 
     function teleportPlayer(s, player) {
@@ -1169,6 +1288,7 @@
         }
 
         if (tile) handleTowerStep(s, player, tile, true);
+        if (s.gasFinalized) rebuildInfectionSafeZones(s);
 
         handleInfection(s, player);
         return;
