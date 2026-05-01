@@ -82,7 +82,6 @@
 
     .board {
       display: grid;
-      grid-template-columns: repeat(8, 1fr);
       gap: 6px;
       background: #0b0d12;
       padding: 8px;
@@ -116,6 +115,28 @@
 
     .tower {
       color: white;
+    }
+
+    .gas-origin {
+      background: #0b7a34 !important;
+      color: white;
+    }
+
+    .infected {
+      background: #2ecc71 !important;
+      color: white;
+    }
+
+    .gas-mark {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: clamp(22px, 4vw, 38px);
+      font-weight: 900;
+      z-index: 2;
+      pointer-events: none;
+      text-shadow: 0 2px 4px black;
     }
 
     .tower-number {
@@ -260,22 +281,22 @@
     }
 
     .stay-btn {
-  font-size: 18px;
-  padding: 16px 28px;
-}
+      font-size: 18px;
+      padding: 16px 28px;
+    }
 
-.reset-bottom {
-  position: fixed;
-  bottom: 12px;
-  right: 12px;
-  padding: 12px 18px;
-  background: #ff6b6b;
-  color: white;
-  border-radius: 12px;
-  border: none;
-  font-weight: bold;
-  z-index: 40;
-}
+    .reset-bottom {
+      position: fixed;
+      bottom: 12px;
+      right: 12px;
+      padding: 12px 18px;
+      background: #ff6b6b;
+      color: white;
+      border-radius: 12px;
+      border: none;
+      font-weight: bold;
+      z-index: 40;
+    }
   </style>
 </head>
 
@@ -297,16 +318,16 @@
     </div>
 
     <div class="top">
-  <button class="stay-btn" onclick="stayTurn()">Stay</button>
-</div>
+      <button class="stay-btn" onclick="stayTurn()">Stay</button>
+    </div>
 
-<button class="reset-bottom" onclick="confirmReset()">Reset</button>
+    <button class="reset-bottom" onclick="confirmReset()">Reset</button>
 
     <div class="info" id="info">Name players, pick colors, and start.</div>
     <div class="scores" id="scores"></div>
     <div class="board" id="board"></div>
 
-    <div class="note">
+    <div class="note" id="gameNote">
       Reveal hidden tiles for 10 points. First to 5000 points or 4 towers wins. Arrow keys move. S stays. Press R 5 times to reset.
     </div>
   </div>
@@ -332,11 +353,14 @@
   </div>
 
   <script>
-    const SIZE = 8;
-    const TOWER_COUNT = 7;
+    let SIZE = 8;
+    let TOWER_COUNT = 7;
+    let POINTS_TO_WIN = 5000;
+    let USE_TOWER_WIN = true;
+    let TWO_PLAYER_MODE = false;
+
     const MIN_DISTANCE = 5;
     const MAX_TOWER_LEVEL = 8;
-    const POINTS_TO_WIN = 5000;
     const TOWERS_TO_WIN = 4;
     const REVEAL_POINTS = 10;
     const MAX_SECRET_PLAYERS = 5;
@@ -353,10 +377,16 @@
     let resetTimer = null;
     let secretPlayerNames = [];
 
+    let gasOrigin = null;
+    let gasActive = false;
+    let infectedTiles = new Set();
+    let gasRound = 0;
+    let fullRoundNumber = 1;
+
     buildPlayerInputs();
 
     function buildPlayerInputs() {
-      const count = Number(document.getElementById("playerCount").value);
+      const count = parseInt(document.getElementById("playerCount").value, 10);
       const box = document.getElementById("playerInputs");
       box.innerHTML = "";
 
@@ -370,8 +400,37 @@
       }
     }
 
+    function applyModeSettings() {
+      const selectedPlayerCount = parseInt(document.getElementById("playerCount").value, 10);
+      TWO_PLAYER_MODE = selectedPlayerCount === 2;
+
+      if (TWO_PLAYER_MODE) {
+        SIZE = 6;
+        TOWER_COUNT = 4;
+        POINTS_TO_WIN = 2000;
+        USE_TOWER_WIN = false;
+
+        document.getElementById("gameNote").textContent =
+          "2-player mode: 6x6 board, 4 towers, first to 2000 points wins. One hidden poison gas tile spreads after it is revealed.";
+      } else {
+        SIZE = 8;
+        TOWER_COUNT = 7;
+        POINTS_TO_WIN = 5000;
+        USE_TOWER_WIN = true;
+
+        document.getElementById("gameNote").textContent =
+          "Reveal hidden tiles for 10 points. First to 5000 points or 4 towers wins. Arrow keys move. S stays. Press R 5 times to reset.";
+      }
+
+      const board = document.getElementById("board");
+      board.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+      board.style.gridTemplateRows = `repeat(${SIZE}, 1fr)`;
+    }
+
     function startGame() {
-      const count = Number(document.getElementById("playerCount").value);
+      applyModeSettings();
+
+      const count = parseInt(document.getElementById("playerCount").value, 10);
 
       tiles = [];
       players = [];
@@ -380,6 +439,12 @@
       finalWinnerId = null;
       consecutiveStayTurns = 0;
       resetPressCount = 0;
+
+      gasOrigin = null;
+      gasActive = false;
+      infectedTiles = new Set();
+      gasRound = 0;
+      fullRoundNumber = 1;
 
       document.getElementById("gameOver").style.display = "none";
       document.getElementById("setupCard").style.display = "none";
@@ -412,19 +477,26 @@
           x: starts[i].x,
           y: starts[i].y,
           color,
-          points: 0
+          points: 0,
+          infected: false
         });
 
         getTile(starts[i].x, starts[i].y).revealed = true;
       }
 
       placeTowers(starts);
+
+      if (TWO_PLAYER_MODE) {
+        placeGas(starts);
+      }
+
       render();
     }
 
     function generateStartPositions(count) {
       const positions = [];
       let attempts = 0;
+      const minDistance = TWO_PLAYER_MODE ? 4 : MIN_DISTANCE;
 
       while (positions.length < count && attempts < 5000) {
         attempts++;
@@ -434,12 +506,19 @@
           y: Math.floor(Math.random() * SIZE)
         };
 
-        const farEnough = positions.every(other => manhattan(pos, other) >= MIN_DISTANCE);
+        const farEnough = positions.every(other => manhattan(pos, other) >= minDistance);
 
         if (farEnough) positions.push(pos);
       }
 
       if (positions.length < count) {
+        if (TWO_PLAYER_MODE) {
+          return [
+            { x: 0, y: 0 },
+            { x: 5, y: 5 }
+          ].slice(0, count);
+        }
+
         return [
           { x: 0, y: 0 },
           { x: 7, y: 7 },
@@ -468,13 +547,33 @@
       }
     }
 
+    function placeGas(startPositions) {
+      let attempts = 0;
+
+      while (attempts < 5000) {
+        attempts++;
+
+        const x = Math.floor(Math.random() * SIZE);
+        const y = Math.floor(Math.random() * SIZE);
+        const tile = getTile(x, y);
+        const isStart = startPositions.some(pos => pos.x === x && pos.y === y);
+
+        if (!isStart && tile.type !== "tower") {
+          tile.type = "gas";
+          return;
+        }
+      }
+    }
+
     function render() {
       renderScores();
       renderBoard();
       renderSecretList();
 
       if (players.length && !gameEnded) {
-        document.getElementById("info").textContent = `${players[currentPlayer].name}'s turn`;
+        const gasText = TWO_PLAYER_MODE && gasActive ? ` | Gas round ${gasRound}` : "";
+        document.getElementById("info").textContent =
+          `${players[currentPlayer].name}'s turn | Round ${fullRoundNumber}${gasText}`;
       } else if (players.length && gameEnded) {
         document.getElementById("info").textContent = "Game over. Hide the final screen to inspect the board.";
       } else {
@@ -490,7 +589,8 @@
         const div = document.createElement("div");
         div.className = "score";
         div.style.background = player.color;
-        div.textContent = `${player.name}: ${player.points} pts | Towers: ${countOwnedTowers(player.id)}`;
+        div.textContent =
+          `${player.name}: ${player.points} pts | Towers: ${countOwnedTowers(player.id)}${player.infected ? " | Infected" : ""}`;
         scores.appendChild(div);
       });
     }
@@ -498,9 +598,12 @@
     function renderBoard() {
       const board = document.getElementById("board");
       board.innerHTML = "";
+      board.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+      board.style.gridTemplateRows = `repeat(${SIZE}, 1fr)`;
 
       for (const tile of tiles) {
         const tilePlayers = players.filter(p => p.x === tile.x && p.y === tile.y);
+        const key = tileKey(tile.x, tile.y);
 
         const div = document.createElement("div");
         div.className = "tile ";
@@ -529,6 +632,19 @@
           div.className += "revealed";
         }
 
+        if (tile.revealed && tile.type === "gas") {
+          div.className += " gas-origin";
+
+          const gasMark = document.createElement("div");
+          gasMark.className = "gas-mark";
+          gasMark.textContent = "☣";
+          div.appendChild(gasMark);
+        }
+
+        if (infectedTiles.has(key) && !(gasOrigin && gasOrigin.x === tile.x && gasOrigin.y === tile.y)) {
+          div.className += " infected";
+        }
+
         div.onclick = () => moveTo(tile.x, tile.y);
 
         const playerLayer = document.createElement("div");
@@ -553,6 +669,17 @@
 
       const player = players[currentPlayer];
 
+      if (player.infected) {
+        teleportPlayer(player);
+        player.infected = false;
+        consecutiveStayTurns = 0;
+
+        if (checkWinner(player)) return;
+
+        nextTurn();
+        return;
+      }
+
       if (!isAdjacent(player.x, player.y, x, y)) return;
 
       player.x = x;
@@ -573,9 +700,16 @@
 
         tile.revealed = true;
         player.points += REVEAL_POINTS;
+
+        if (TWO_PLAYER_MODE && tile.type === "gas" && !gasActive) {
+          gasActive = true;
+          gasOrigin = { x: tile.x, y: tile.y };
+          infectedTiles.add(tileKey(tile.x, tile.y));
+        }
       }
 
       handleTowerStep(player, tile, true);
+      handleInfection(player);
 
       consecutiveStayTurns = 0;
 
@@ -588,9 +722,22 @@
       if (!players.length || gameEnded) return;
 
       const player = players[currentPlayer];
+
+      if (player.infected) {
+        teleportPlayer(player);
+        player.infected = false;
+        consecutiveStayTurns = 0;
+
+        if (checkWinner(player)) return;
+
+        nextTurn();
+        return;
+      }
+
       const tile = getTile(player.x, player.y);
 
       handleTowerStep(player, tile, false);
+      handleInfection(player);
 
       consecutiveStayTurns++;
 
@@ -653,6 +800,109 @@
       }
     }
 
+    function handleInfection(player) {
+      if (!TWO_PLAYER_MODE || !gasActive) return;
+
+      const key = tileKey(player.x, player.y);
+
+      if (!infectedTiles.has(key)) return;
+
+      if (gasOrigin && player.x === gasOrigin.x && player.y === gasOrigin.y) return;
+
+      player.infected = true;
+    }
+
+    function expandGas() {
+      if (!TWO_PLAYER_MODE || !gasActive) return;
+
+      gasRound++;
+
+      let expansions = 1;
+
+      if (gasRound === 3 || gasRound === 4) {
+        expansions = 2;
+      }
+
+      if (gasRound >= 5) {
+        expansions = 6;
+      }
+
+      for (let i = 0; i < expansions; i++) {
+        const possible = [];
+
+        infectedTiles.forEach(key => {
+          const [x, y] = key.split(",").map(Number);
+
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              if (dx === 0 && dy === 0) continue;
+
+              const nx = x + dx;
+              const ny = y + dy;
+
+              if (nx < 0 || ny < 0 || nx >= SIZE || ny >= SIZE) continue;
+
+              const newKey = tileKey(nx, ny);
+
+              if (!infectedTiles.has(newKey)) {
+                possible.push(newKey);
+              }
+            }
+          }
+        });
+
+        if (possible.length) {
+          const pick = possible[Math.floor(Math.random() * possible.length)];
+          infectedTiles.add(pick);
+
+          const [px, py] = pick.split(",").map(Number);
+          const tile = getTile(px, py);
+
+          if (tile) {
+            tile.revealed = true;
+          }
+        }
+      }
+
+      players.forEach(player => handleInfection(player));
+    }
+
+    function teleportPlayer(player) {
+      let attempts = 0;
+
+      while (attempts < 1000) {
+        attempts++;
+
+        const x = Math.floor(Math.random() * SIZE);
+        const y = Math.floor(Math.random() * SIZE);
+
+        if (gasOrigin && x === gasOrigin.x && y === gasOrigin.y) continue;
+
+        player.x = x;
+        player.y = y;
+
+        const tile = getTile(x, y);
+
+        if (tile && !tile.revealed) {
+          tile.revealed = true;
+          player.points += REVEAL_POINTS;
+
+          if (TWO_PLAYER_MODE && tile.type === "gas" && !gasActive) {
+            gasActive = true;
+            gasOrigin = { x: tile.x, y: tile.y };
+            infectedTiles.add(tileKey(tile.x, tile.y));
+          }
+        }
+
+        if (tile) {
+          handleTowerStep(player, tile, true);
+        }
+
+        handleInfection(player);
+        return;
+      }
+    }
+
     function pointsForTowerLevel(level) {
       return 50 + (level - 1) * 107;
     }
@@ -665,7 +915,7 @@
         return true;
       }
 
-      if (ownedTowers >= TOWERS_TO_WIN) {
+      if (USE_TOWER_WIN && ownedTowers >= TOWERS_TO_WIN) {
         endGame(player, `${player.name} owns ${ownedTowers} of ${TOWER_COUNT} towers.`, false);
         return true;
       }
@@ -745,7 +995,13 @@
 
     function nextTurn() {
       currentPlayer++;
-      if (currentPlayer >= players.length) currentPlayer = 0;
+
+      if (currentPlayer >= players.length) {
+        currentPlayer = 0;
+        fullRoundNumber++;
+        expandGas();
+      }
+
       render();
     }
 
@@ -808,6 +1064,10 @@
       return tiles.find(tile => tile.x === x && tile.y === y);
     }
 
+    function tileKey(x, y) {
+      return `${x},${y}`;
+    }
+
     function manhattan(a, b) {
       return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
@@ -822,9 +1082,27 @@
       resetPressCount = 0;
       secretPlayerNames = [];
 
+      gasOrigin = null;
+      gasActive = false;
+      infectedTiles = new Set();
+      gasRound = 0;
+      fullRoundNumber = 1;
+
+      SIZE = 8;
+      TOWER_COUNT = 7;
+      POINTS_TO_WIN = 5000;
+      USE_TOWER_WIN = true;
+      TWO_PLAYER_MODE = false;
+
+      const board = document.getElementById("board");
+      board.style.gridTemplateColumns = "repeat(8, 1fr)";
+      board.style.gridTemplateRows = "repeat(8, 1fr)";
+
       document.getElementById("board").innerHTML = "";
       document.getElementById("scores").innerHTML = "";
       document.getElementById("info").textContent = "Name players, pick colors, and start.";
+      document.getElementById("gameNote").textContent =
+        "Reveal hidden tiles for 10 points. First to 5000 points or 4 towers wins. Arrow keys move. S stays. Press R 5 times to reset.";
       document.getElementById("gameOver").style.display = "none";
       document.getElementById("setupCard").style.display = "block";
       document.getElementById("secretPanel").style.display = "none";
@@ -864,11 +1142,11 @@
     });
 
     function confirmReset() {
-  const confirmed = confirm("Are you sure you'd like to reset?");
-  if (confirmed) {
-    resetGame();
-  }
-}
+      const confirmed = confirm("Are you sure you'd like to reset?");
+      if (confirmed) {
+        resetGame();
+      }
+    }
   </script>
 </body>
 </html>
