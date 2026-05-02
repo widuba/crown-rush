@@ -1122,34 +1122,28 @@
     }
 
     document.addEventListener("keydown", function(event) {
-      const key = event.key.toLowerCase();
+  if (!state || state.status !== "playing" || !isMyTurn()) return;
 
-      if (key === "r") {
-        resetPressCount++;
+  const key = event.key.toLowerCase();
 
-        clearTimeout(resetTimer);
-        resetTimer = setTimeout(() => {
-          resetPressCount = 0;
-        }, 1500);
+  if (
+    key === "arrowup" ||
+    key === "arrowdown" ||
+    key === "arrowleft" ||
+    key === "arrowright" ||
+    key === "s"
+  ) {
+    event.preventDefault();
+  }
 
-        if (resetPressCount >= 5) {
-          resetGame();
-          resetPressCount = 0;
-        }
+  const player = state.players[state.currentPlayer];
 
-        return;
-      }
-
-      if (!players.length || gameEnded) return;
-
-      const player = players[currentPlayer];
-
-      if (key === "arrowup") moveTo(player.x, player.y - 1);
-      if (key === "arrowdown") moveTo(player.x, player.y + 1);
-      if (key === "arrowleft") moveTo(player.x - 1, player.y);
-      if (key === "arrowright") moveTo(player.x + 1, player.y);
-      if (key === "s") stayTurn();
-    });
+  if (key === "arrowup") moveTo(player.x, player.y - 1);
+  if (key === "arrowdown") moveTo(player.x, player.y + 1);
+  if (key === "arrowleft") moveTo(player.x - 1, player.y);
+  if (key === "arrowright") moveTo(player.x + 1, player.y);
+  if (key === "s") stayTurn();
+});
 
     function confirmReset() {
       const confirmed = confirm("Are you sure you'd like to reset?");
