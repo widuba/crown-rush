@@ -346,6 +346,7 @@
           <input id="loginEmail" type="email" placeholder="Email">
           <input id="loginPassword" type="password" placeholder="Password">
           <button onclick="login()">Login</button>
+          <button class="secondary" onclick="googleLogin()" style="width:100%; margin-top:8px;">Sign in with Google</button>
         </div>
       </div>
 
@@ -425,12 +426,14 @@
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
-      getAuth,
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      signOut,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
     import {
       getFirestore,
       doc,
@@ -455,6 +458,7 @@
     window.signUp = signUp;
     window.login = login;
     window.logout = logout;
+    window.googleLogin = googleLogin;
     window.createRoom = createRoom;
     window.joinRoom = joinRoom;
     window.startRoomGame = startRoomGame;
@@ -549,6 +553,66 @@
         setAuthMessage(err.message);
       }
     }
+
+    async function googleLogin() {
+  try {
+    setAuthMessage("");
+
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+
+    const profileSnap = await getDoc(doc(db, "users", user.uid));
+
+    if (!profileSnap.exists()) {
+      let username = prompt("Choose a username for your account:");
+
+      if (!username) {
+        await signOut(auth);
+        setAuthMessage("Google sign-in cancelled. Username is required.");
+        return;
+      }
+
+      username = username.trim();
+
+      if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
+        await signOut(auth);
+        setAuthMessage("Username must be 3-16 characters and only use letters, numbers, or underscores.");
+        return;
+      }
+
+      const key = usernameKey(username);
+      const usernameRef = doc(db, "usernames", key);
+
+      await runTransaction(db, async (tx) => {
+        const usernameSnap = await tx.get(usernameRef);
+
+        if (usernameSnap.exists()) {
+          throw new Error("That username is already taken.");
+        }
+
+        tx.set(usernameRef, {
+          uid: user.uid,
+          username,
+          createdAt: serverTimestamp()
+        });
+
+        tx.set(doc(db, "users", user.uid), {
+          uid: user.uid,
+          username,
+          usernameKey: key,
+          email: user.email || "",
+          provider: "google",
+          createdAt: serverTimestamp()
+        });
+      });
+    }
+
+    setAuthMessage("");
+  } catch (err) {
+    setAuthMessage(err.message);
+  }
+}
 
     async function logout() {
       if (unsubRoom) unsubRoom();
