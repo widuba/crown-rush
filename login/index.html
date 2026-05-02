@@ -484,10 +484,12 @@
       }
 
       const profileSnap = await getDoc(doc(db, "users", user.uid));
-      if (!profileSnap.exists()) {
-        await signOut(auth);
-        return;
-      }
+      const profileSnap = await getDoc(doc(db, "users", user.uid));
+
+if (!profileSnap.exists()) {
+  document.getElementById("signedInAs").textContent = "Setting up account...";
+  return;
+}
 
       currentProfile = profileSnap.data();
       document.getElementById("signedInAs").textContent = currentProfile.username;
