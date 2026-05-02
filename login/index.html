@@ -1556,17 +1556,28 @@ showRoom();
     }
 
     document.addEventListener("keydown", function(event) {
-      if (!state || state.status !== "playing" || !isMyTurn()) return;
+  if (!state || state.status !== "playing" || !isMyTurn()) return;
 
-      const player = state.players[state.currentPlayer];
-      const key = event.key.toLowerCase();
+  const key = event.key.toLowerCase();
 
-      if (key === "arrowup") moveTo(player.x, player.y - 1);
-      if (key === "arrowdown") moveTo(player.x, player.y + 1);
-      if (key === "arrowleft") moveTo(player.x - 1, player.y);
-      if (key === "arrowright") moveTo(player.x + 1, player.y);
-      if (key === "s") stayTurn();
-    });
+  if (
+    key === "arrowup" ||
+    key === "arrowdown" ||
+    key === "arrowleft" ||
+    key === "arrowright" ||
+    key === "s"
+  ) {
+    event.preventDefault();
+  }
+
+  const player = state.players[state.currentPlayer];
+
+  if (key === "arrowup") moveTo(player.x, player.y - 1);
+  if (key === "arrowdown") moveTo(player.x, player.y + 1);
+  if (key === "arrowleft") moveTo(player.x - 1, player.y);
+  if (key === "arrowright") moveTo(player.x + 1, player.y);
+  if (key === "s") stayTurn();
+});
   </script>
 </body>
 </html>
