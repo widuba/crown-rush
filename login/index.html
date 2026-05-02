@@ -475,26 +475,26 @@
     window.backToRoom = backToRoom;
 
     onAuthStateChanged(auth, async (user) => {
-      currentUser = user;
+  currentUser = user;
 
-      if (!user) {
-        currentProfile = null;
-        showAuth();
-        return;
-      }
+  if (!user) {
+    currentProfile = null;
+    showAuth();
+    return;
+  }
 
-      const profileSnap = await getDoc(doc(db, "users", user.uid));
-      const profileSnap = await getDoc(doc(db, "users", user.uid));
+  const profileSnap = await getDoc(doc(db, "users", user.uid));
 
-if (!profileSnap.exists()) {
-  document.getElementById("signedInAs").textContent = "Setting up account...";
-  return;
-}
+  if (!profileSnap.exists()) {
+    currentProfile = null;
+    document.getElementById("signedInAs").textContent = "Setting up account...";
+    return;
+  }
 
-      currentProfile = profileSnap.data();
-      document.getElementById("signedInAs").textContent = currentProfile.username;
-      showRoom();
-    });
+  currentProfile = profileSnap.data();
+  document.getElementById("signedInAs").textContent = currentProfile.username;
+  showRoom();
+});
 
     function usernameKey(name) {
       return name.trim().toLowerCase();
@@ -520,6 +520,15 @@ if (!profileSnap.exists()) {
           if (usernameSnap.exists()) {
             throw new Error("That username is already taken.");
           }
+          currentProfile = {
+  uid: cred.user.uid,
+  username,
+  usernameKey: key,
+  email
+};
+
+document.getElementById("signedInAs").textContent = username;
+showRoom();
         });
 
         const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -615,6 +624,17 @@ if (!profileSnap.exists()) {
           createdAt: serverTimestamp()
         });
       });
+
+      currentProfile = {
+  uid: user.uid,
+  username,
+  usernameKey: key,
+  email: user.email || "",
+  provider: "google"
+};
+
+document.getElementById("signedInAs").textContent = username;
+showRoom();
     }
 
     setAuthMessage("");
