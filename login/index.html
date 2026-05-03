@@ -1157,7 +1157,7 @@ showRoom();
       }
 
       if (next.consecutiveStayTurns >= next.players.length * 5) {
-        endGameInState(next, getRankingFor(next)[0], "Game ended because everyone stayed for 3 full rounds with no movement.");
+        endGameInState(next, getRankingFor(next)[0], "Game ended because everyone stayed for 5 full rounds with no movement.");
         await saveState(next);
         return;
       }
