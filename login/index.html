@@ -375,12 +375,15 @@
           <option value="4">4 Players</option>
         </select>
 
-        <input id="playerColor" type="color" value="#e03131">
+        <label class="small">Host color</label>
+        <input id="hostPlayerColor" type="color" value="#e03131">
         <button onclick="createRoom()">Create Room</button>
       </div>
 
       <div class="setup-row">
         <input id="joinCode" placeholder="Room code">
+        <label class="small">Join color</label>
+        <input id="joinPlayerColor" type="color" value="#1971c2">
         <button onclick="joinRoom()">Join Room</button>
       </div>
 
@@ -473,6 +476,7 @@
     window.confirmResetRoom = confirmResetRoom;
     window.hideGameOver = hideGameOver;
     window.backToRoom = backToRoom;
+    window.updateMyLobbyColor = updateMyLobbyColor;
 
     onAuthStateChanged(auth, async (user) => {
   currentUser = user;
@@ -684,7 +688,7 @@ showRoom();
       if (!currentUser || !currentProfile) return;
 
       const playerCount = parseInt(document.getElementById("roomPlayerCount").value, 10);
-      const color = document.getElementById("playerColor").value;
+      const color = document.getElementById("hostPlayerColor").value;
 
       let code = roomCode();
       let ref = doc(db, "games", code);
@@ -701,7 +705,7 @@ showRoom();
       blank.players.push({
         uid: currentUser.uid,
         username: currentProfile.username,
-        color,
+        color: pickAvailableColor([], color),
         id: 0,
         x: null,
         y: null,
@@ -720,7 +724,7 @@ showRoom();
       if (!code) return;
 
       const ref = doc(db, "games", code);
-      const color = document.getElementById("playerColor").value;
+      const preferredColor = document.getElementById("joinPlayerColor").value;
 
       try {
         await runTransaction(db, async (tx) => {
@@ -731,19 +735,28 @@ showRoom();
           if (data.status !== "lobby") throw new Error("That game already started.");
 
           const players = data.players || [];
-          if (players.some(p => p.uid === currentUser.uid)) return;
-          if (players.length >= data.playerCount) throw new Error("Room is full.");
+          const existingIndex = players.findIndex(p => p.uid === currentUser.uid);
 
-          players.push({
-            uid: currentUser.uid,
-            username: currentProfile.username,
-            color,
-            id: players.length,
-            x: null,
-            y: null,
-            points: 0,
-            infected: false
-          });
+          if (existingIndex !== -1) {
+            const otherPlayers = players.filter(p => p.uid !== currentUser.uid);
+            players[existingIndex] = {
+              ...players[existingIndex],
+              color: pickAvailableColor(otherPlayers, preferredColor)
+            };
+          } else {
+            if (players.length >= data.playerCount) throw new Error("Room is full.");
+
+            players.push({
+              uid: currentUser.uid,
+              username: currentProfile.username,
+              color: pickAvailableColor(players, preferredColor),
+              id: players.length,
+              x: null,
+              y: null,
+              points: 0,
+              infected: false
+            });
+          }
 
           tx.update(ref, { players, updatedAt: serverTimestamp() });
         });
@@ -752,6 +765,28 @@ showRoom();
       } catch (err) {
         alert(err.message);
       }
+    }
+
+    function normalizeHex(color) {
+      return String(color || "").trim().toLowerCase();
+    }
+
+    function pickAvailableColor(existingPlayers, preferredColor) {
+      const fallbackColors = ["#e03131", "#1971c2", "#2f9e44", "#9c36b5", "#f08c00", "#0ca678", "#c2255c", "#364fc7"];
+      const used = new Set((existingPlayers || []).map(p => normalizeHex(p.color)));
+      const preferred = normalizeHex(preferredColor);
+
+      if (preferred && !used.has(preferred)) {
+        return preferred;
+      }
+
+      for (const color of fallbackColors) {
+        if (!used.has(normalizeHex(color))) {
+          return color;
+        }
+      }
+
+      return preferred || fallbackColors[0];
     }
 
     function blankGame(code, playerCount) {
@@ -813,13 +848,64 @@ showRoom();
       if (!state) return;
 
       document.getElementById("roomCodeDisplay").textContent = state.code;
-      document.getElementById("lobbyPlayers").textContent =
-        `Players (${state.players.length}/${state.playerCount}): ${state.players.map(p => p.username).join(", ")}`;
+
+      const playerList = state.players.map(p => {
+        return `${p.username} <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${p.color};border:1px solid white;vertical-align:middle;"></span>`;
+      }).join(", ");
+
+      const me = state.players.find(p => p.uid === currentUser?.uid);
+      const colorEditor = me && state.status === "lobby"
+        ? `<div class="setup-row" style="margin-top:10px;">
+             <label class="small">Your lobby color</label>
+             <input id="lobbyColorPicker" type="color" value="${me.color}">
+             <button onclick="updateMyLobbyColor()">Save Color</button>
+           </div>`
+        : "";
+
+      document.getElementById("lobbyPlayers").innerHTML =
+        `Players (${state.players.length}/${state.playerCount}): ${playerList}${colorEditor}`;
 
       document.getElementById("startRoomBtn").disabled =
         currentUser.uid !== state.hostUid ||
         state.status !== "lobby" ||
         state.players.length !== state.playerCount;
+    }
+
+    async function updateMyLobbyColor() {
+      if (!state || !currentUser || state.status !== "lobby") return;
+
+      const picker = document.getElementById("lobbyColorPicker");
+      if (!picker) return;
+
+      const preferredColor = picker.value;
+      const ref = doc(db, "games", state.code);
+
+      try {
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(ref);
+          if (!snap.exists()) throw new Error("Room not found.");
+
+          const data = snap.data();
+          if (data.status !== "lobby") throw new Error("Colors can only be changed before the game starts.");
+
+          const players = data.players || [];
+          const index = players.findIndex(p => p.uid === currentUser.uid);
+          if (index === -1) throw new Error("You are not in this room.");
+
+          const otherPlayers = players.filter(p => p.uid !== currentUser.uid);
+          players[index] = {
+            ...players[index],
+            color: pickAvailableColor(otherPlayers, preferredColor)
+          };
+
+          tx.update(ref, {
+            players,
+            updatedAt: serverTimestamp()
+          });
+        });
+      } catch (err) {
+        alert(err.message);
+      }
     }
 
     async function startRoomGame() {
