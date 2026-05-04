@@ -1492,9 +1492,7 @@ showRoom();
       showRoom();
     }
 
-    function pointsForTowerLevel(level) {
-      return 50 + (level - 1) * 107;
-    }
+    return Math.floor(50 * Math.pow(1.6, level - 1));
 
     function countOwnedTowersIn(s, playerId) {
       return (s.tiles || []).filter(tile => tile.type === "tower" && tile.owner === playerId).length;
