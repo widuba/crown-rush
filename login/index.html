@@ -489,8 +489,8 @@
     .tile.locked { cursor: not-allowed; }
 
     .hidden {
-      background: linear-gradient(135deg, #1b1450, #0d0b30);
-      border-color: rgba(167,139,250,.18);
+      background: #ffffff;
+      border-color: #ccc8e8;
     }
 
     .revealed { background: #181035; color: #fff; }
@@ -1253,11 +1253,12 @@ showRoom();
 
         state = snap.data();
 
-        renderLobby();
-
         if (state.status === "playing" || state.status === "ended") {
           showGame();
           render();
+        } else {
+          showRoom();
+          renderLobby();
         }
       });
     }
