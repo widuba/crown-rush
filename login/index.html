@@ -876,7 +876,7 @@
         box.innerHTML = `
           <div class="mode-card ${selectedGameType === "classic" ? "active" : ""}" onclick="selectGameType('classic')">
             <strong>Classic</strong>
-            <span>8x8 grid, 7 towers, win by 5000 pts or 4 towers.</span>
+            <span>6x6 grid, 4 towers, win by 3000 points.</span>
           </div>
           <div class="mode-card ${selectedGameType === "poison" ? "active" : ""}" onclick="selectGameType('poison')">
             <strong>Poison Gas</strong>
@@ -885,10 +885,13 @@
         `;
       } else {
         selectedGameType = "classic";
+        const desc = count === 3
+          ? "7x7 grid, 6 towers, win by 4000 pts or 3 towers."
+          : "8x8 grid, 7 towers, win by 5000 pts or 4 towers.";
         box.innerHTML = `
           <div class="mode-card active" onclick="selectGameType('classic')">
             <strong>Classic</strong>
-            <span>8x8 grid, 7 towers, win by 5000 pts or 4 towers.</span>
+            <span>${desc}</span>
           </div>
         `;
       }
@@ -1253,6 +1256,17 @@ showRoom();
     function blankGame(code, playerCount, gameType = "classic") {
       const poisonMode = playerCount === 2 && gameType === "poison";
 
+      let size, towerCount, pointsToWin, useTowerWin, towersToWin;
+      if (poisonMode) {
+        size = 6; towerCount = 4; pointsToWin = 2000; useTowerWin = false; towersToWin = 0;
+      } else if (playerCount === 2) {
+        size = 6; towerCount = 4; pointsToWin = 3000; useTowerWin = false; towersToWin = 0;
+      } else if (playerCount === 3) {
+        size = 7; towerCount = 6; pointsToWin = 4000; useTowerWin = true; towersToWin = 3;
+      } else {
+        size = 8; towerCount = 7; pointsToWin = 5000; useTowerWin = true; towersToWin = 4;
+      }
+
       return {
         code,
         createdAt: serverTimestamp(),
@@ -1261,10 +1275,11 @@ showRoom();
         status: "lobby",
         playerCount,
         gameType,
-        size: poisonMode ? 6 : 8,
-        towerCount: poisonMode ? 4 : 7,
-        pointsToWin: poisonMode ? 2000 : 5000,
-        useTowerWin: !poisonMode,
+        size,
+        towerCount,
+        pointsToWin,
+        useTowerWin,
+        towersToWin,
         twoPlayerMode: poisonMode,
         currentPlayer: 0,
         fullRoundNumber: 1,
@@ -1521,9 +1536,14 @@ showRoom();
         showGameOver();
       }
 
-      document.getElementById("gameNote").textContent = state.twoPlayerMode
-        ? "Poison Gas mode: 2 players, 6x6, 4 towers, first to 2000. Gas spreads after revealed."
-        : `${state.playerCount}-player Classic: 8x8, 7 towers, first to 5000 or 4 towers. Arrow keys / S stays.`;
+      if (state.twoPlayerMode) {
+        document.getElementById("gameNote").textContent =
+          "Poison Gas mode: 2 players, 6x6, 4 towers, first to 2000. Gas spreads after revealed.";
+      } else {
+        const towerNote = state.useTowerWin ? ` or ${state.towersToWin} towers` : "";
+        document.getElementById("gameNote").textContent =
+          `${state.playerCount}-player Classic: ${state.size}x${state.size}, ${state.towerCount} towers, first to ${state.pointsToWin} pts${towerNote}. Arrow keys / S stays.`;
+      }
     }
 
     function renderScores() {
@@ -1956,7 +1976,7 @@ showRoom();
         return true;
       }
 
-      if (s.useTowerWin && ownedTowers >= 4) {
+      if (s.useTowerWin && ownedTowers >= (s.towersToWin || 4)) {
         endGameInState(s, player, `${player.username} owns ${ownedTowers} of ${s.towerCount} towers.`);
         return true;
       }
