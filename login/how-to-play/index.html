@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to Play Hidden Towers</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:Arial,sans-serif; background:#151820; color:white; min-height:100vh; padding:24px; }
+    .page { width:min(95vw,1000px); margin:0 auto; }
+    .hero,.card { background:#202636; border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:22px; margin-bottom:18px; box-shadow:0 18px 50px rgba(0,0,0,.18); }
+    h1 { margin:0 0 8px; font-size:clamp(32px,6vw,56px); color:#ffd166; }
+    h2 { margin:0 0 12px; color:#ffd166; font-size:clamp(22px,4vw,30px); }
+    h3 { margin:16px 0 8px; }
+    p,li { color:#dbe4f0; line-height:1.55; font-size:16px; }
+    ul,ol { margin-top:8px; padding-left:24px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+    .mini-card { background:rgba(0,0,0,.2); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:16px; }
+    .tag { display:inline-block; padding:6px 10px; border-radius:999px; background:#334155; color:white; font-size:13px; font-weight:bold; margin:3px; }
+    .good{background:#2f9e44}.warn{background:#ffb703;color:#151820}.bad{background:#2ecc71;color:#08150c}.purple{background:#7048e8}.red{background:#ff6b6b}
+    table { width:100%; border-collapse:collapse; overflow:hidden; border-radius:12px; margin-top:12px; }
+    th,td { text-align:left; padding:12px; border-bottom:1px solid rgba(255,255,255,.1); color:#dbe4f0; }
+    th { background:rgba(255,255,255,.08); color:white; }
+    tr:last-child td { border-bottom:none; }
+    .example-board { display:grid; grid-template-columns:repeat(6,38px); gap:6px; justify-content:center; margin:16px 0 4px; }
+    .tile { width:38px; height:38px; border-radius:9px; display:grid; place-items:center; font-weight:900; border:2px solid #2c3345; color:white; position:relative; overflow:hidden; }
+    .hidden{background:white}.empty{background:#2d3748}.tower{background:#7048e8}.gas{background:#0b7a34}.infected{background:#2ecc71;color:#08230f}.safe{background:#1971c2}
+    .controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .key { background:#0b0d12; border:1px solid rgba(255,255,255,.16); padding:8px 12px; border-radius:10px; color:white; font-weight:bold; }
+    .footer { color:#94a3b8; font-size:13px; text-align:center; padding:20px 0 8px; }
+    .callout { border-left:5px solid #ffd166; background:rgba(255,209,102,.08); padding:12px 14px; border-radius:12px; margin-top:12px; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>Hidden Towers</h1>
+      <p>Hidden Towers is a fog-of-war strategy board game where players explore a hidden grid, discover towers, claim territory, upgrade towers, survive poison gas, and race to the winning score.</p>
+      <div><span class="tag purple">Hidden Towers</span><span class="tag good">Strategy</span><span class="tag warn">Fog of War</span><span class="tag bad">Poison Gas</span></div>
+    </section>
+
+    <section class="card">
+      <h2>Goal of the Game</h2>
+      <p>Score points by revealing tiles, claiming towers, upgrading towers, and controlling strong positions.</p>
+      <table><thead><tr><th>Mode</th><th>Board</th><th>Towers</th><th>Win Condition</th></tr></thead><tbody>
+        <tr><td>2 Players</td><td>6×6</td><td>4 towers</td><td>First to 2000 points</td></tr>
+        <tr><td>3–4 Players</td><td>8×8</td><td>7 towers</td><td>First to 5000 points or 4 towers</td></tr>
+      </tbody></table>
+    </section>
+
+    <section class="card">
+      <h2>Starting the Game</h2>
+      <ol><li>Create an account or log in.</li><li>Create a room or join a room with a room code.</li><li>Choose your player color before the game starts.</li><li>When the room is full, the host starts the game.</li></ol>
+      <p>Every player starts on a revealed tile. The rest of the board begins as hidden white tiles.</p>
+    </section>
+
+    <section class="card">
+      <h2>Tile Types</h2>
+      <div class="grid">
+        <div class="mini-card"><div class="tile hidden"></div><h3>Hidden White Tile</h3><p>Unknown space. When you move onto it, it reveals and gives you 10 points.</p></div>
+        <div class="mini-card"><div class="tile empty"></div><h3>Empty Tile</h3><p>A normal revealed tile. You can move through it safely unless poison later infects it.</p></div>
+        <div class="mini-card"><div class="tile tower">1</div><h3>Tower</h3><p>A powerful scoring tile. Claim it, defend it, and upgrade it for more points.</p></div>
+        <div class="mini-card"><div class="tile gas">☣</div><h3>Poison Gas Origin</h3><p>In 2-player mode, one hidden poison gas tile exists. Revealing it starts the spread.</p></div>
+        <div class="mini-card"><div class="tile infected"></div><h3>Infected Tile</h3><p>If you step on it, your next turn is skipped and you teleport randomly.</p></div>
+        <div class="mini-card"><div class="tile safe">A</div><h3>Safe Infected Lane</h3><p>After poison finishes spreading, some infected tiles become safe for specific tower owners.</p></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Turns and Movement</h2>
+      <p>On your turn, you can either move one space or stay where you are.</p>
+      <div class="controls"><span class="key">↑ Move Up</span><span class="key">↓ Move Down</span><span class="key">← Move Left</span><span class="key">→ Move Right</span><span class="key">S = Stay</span></div>
+      <ul><li>You can only move up, down, left, or right.</li><li>You cannot move diagonally.</li><li>Only the current player can move from their device.</li><li>If you reveal a hidden tile, you gain 10 points.</li></ul>
+    </section>
+
+    <section class="card">
+      <h2>Towers</h2>
+      <p>Towers are hidden at the start. When a player reveals a tower, they claim it. Claimed towers turn into that player’s color.</p>
+      <h3>Claiming Towers</h3>
+      <ul><li>The first player to reveal an unowned tower claims it.</li><li>Claiming a level 1 tower gives 50 points.</li><li>Enemy players can capture your tower by staying on it for 5 turns.</li></ul>
+      <h3>Upgrading Towers</h3>
+      <p>If you own a tower, you can stay on it to level it up. The tower max level is 8.</p>
+      <table><thead><tr><th>Tower Level</th><th>Points Earned</th></tr></thead><tbody>
+        <tr><td>Level 1</td><td>50</td></tr><tr><td>Level 2</td><td>80</td></tr><tr><td>Level 3</td><td>128</td></tr><tr><td>Level 4</td><td>204</td></tr><tr><td>Level 5</td><td>327</td></tr><tr><td>Level 6</td><td>524</td></tr><tr><td>Level 7</td><td>838</td></tr><tr><td>Level 8</td><td>1342</td></tr>
+      </tbody></table>
+      <p>These values come from: 50 × 1.6^(level - 1), rounded down.</p>
+    </section>
+
+    <section class="card">
+      <h2>Poison Gas: 2-Player Mode Only</h2>
+      <p>In 2-player mode, one hidden poison gas tile is placed somewhere on the board. Once a player reveals it, poison begins spreading at the end of full rounds.</p>
+      <table><thead><tr><th>Gas Round</th><th>New Infected Tiles</th></tr></thead><tbody>
+        <tr><td>Round 1</td><td>+1 tile</td></tr><tr><td>Round 2</td><td>+1 tile</td></tr><tr><td>Round 3</td><td>+2 tiles</td></tr><tr><td>Round 4</td><td>+2 tiles</td></tr><tr><td>Round 5</td><td>+3 tiles</td></tr><tr><td>After Round 5</td><td>No new poison spreads</td></tr>
+      </tbody></table>
+      <div class="callout"><p>Infected tiles are permanent. If you step on an infected tile, then on your next turn you are randomly teleported somewhere else instead of choosing your move.</p></div>
+    </section>
+
+    <section class="card">
+      <h2>Safe Infected Lanes</h2>
+      <p>Once poison is finished spreading, owned towers create safe lanes through infected areas.</p>
+      <ol><li>Every owned tower checks in a plus shape: up, down, left, and right.</li><li>It scans all the way to the edge of the board.</li><li>If an infected tile is found in that line, it becomes safe for that tower’s owner.</li><li>The tile shows the owner’s color and letter.</li><li>If multiple owners protect the same infected tile, it is safe for all of them.</li></ol>
+      <p>These safe tiles are still dangerous to players who do not own one of the protecting towers.</p>
+      <div class="example-board">
+        <div class="tile empty"></div><div class="tile infected"></div><div class="tile safe">A</div><div class="tile infected"></div><div class="tile empty"></div><div class="tile empty"></div>
+        <div class="tile empty"></div><div class="tile empty"></div><div class="tile safe">A</div><div class="tile empty"></div><div class="tile infected"></div><div class="tile empty"></div>
+        <div class="tile safe">A</div><div class="tile safe">A</div><div class="tile tower">4</div><div class="tile safe">A</div><div class="tile safe">A</div><div class="tile infected"></div>
+        <div class="tile empty"></div><div class="tile infected"></div><div class="tile safe">A</div><div class="tile empty"></div><div class="tile empty"></div><div class="tile empty"></div>
+        <div class="tile empty"></div><div class="tile empty"></div><div class="tile safe">A</div><div class="tile infected"></div><div class="tile empty"></div><div class="tile empty"></div>
+        <div class="tile empty"></div><div class="tile empty"></div><div class="tile infected"></div><div class="tile empty"></div><div class="tile empty"></div><div class="tile empty"></div>
+      </div>
+      <p>Example: Player A owns the tower. Infected tiles in the tower’s plus-shaped line become safe for Player A.</p>
+    </section>
+
+    <section class="card">
+      <h2>Ending the Game</h2>
+      <ul><li>2-player mode: first to 2000 points wins.</li><li>3–4 player mode: first to 5000 points wins, or first to own 4 towers wins.</li><li>If everyone stays for 5 full rounds with no movement, the game ends and rankings decide the winner.</li></ul>
+      <h3>Final Ranking</h3>
+      <p>Final rankings are based mainly on points. If someone wins by a special win condition, they are shown as the winner even if another player has more points.</p>
+    </section>
+
+    <section class="card">
+      <h2>Quick Strategy Tips</h2>
+      <ul><li>Reveal hidden tiles early to collect points and locate towers.</li><li>Do not ignore tower upgrades. High-level towers are worth a lot.</li><li>In 2-player mode, poison gas changes the whole map, so control towers that can create safe lanes.</li><li>Capturing enemy towers can be powerful, but standing still too long may let the other player score elsewhere.</li><li>Use safe infected lanes after gas finishes spreading to reach areas your opponent cannot safely enter.</li></ul>
+    </section>
+
+    <div class="footer">Hidden Towers — How to Play</div>
+  </main>
+</body>
+</html>
