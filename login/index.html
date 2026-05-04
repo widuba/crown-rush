@@ -204,7 +204,7 @@
     }
 
     /* ── Hidden helper ── */
-    .hidden-section { display: none !important; }
+    .hidden-section { display: none; }
     .tab-hidden { display: none !important; }
 
     /* ════════════════════════════
@@ -285,10 +285,6 @@
       flex-direction: column;
       gap: 8px;
     }
-
-    /* JS sets display:block — override to flex */
-    #roomCard[style*="display: block"],
-    #roomCard[style*="display:block"] { display: flex !important; }
 
     .room-header {
       display: flex; align-items: center;
@@ -396,14 +392,17 @@
       gap: 8px; flex-wrap: wrap; margin-top: 6px;
     }
 
-    /* In-lobby: hide the main menu */
+    #lobbyBox { display: none; }
+
+    /* In-lobby: hide the main menu, show lobby */
     #roomCard.in-lobby .menu-grid,
-    #roomCard.in-lobby .room-main-title { display: none !important; }
+    #roomCard.in-lobby .room-main-title { display: none; }
+    #roomCard.in-lobby #lobbyBox { display: block; }
 
     /* In-game: collapse room card to just the header */
     body.view-game #roomCard .menu-grid,
     body.view-game #roomCard .room-main-title,
-    body.view-game #roomCard #lobbyBox { display: none !important; }
+    body.view-game #roomCard #lobbyBox { display: none; }
 
     /* ════════════════════════════
        GAME AREA
@@ -741,7 +740,7 @@
         </div>
       </div>
 
-      <div id="lobbyBox" class="hidden-section">
+      <div id="lobbyBox">
         <div class="lobby-label">Room Code</div>
         <div class="room-code" id="roomCodeDisplay"></div>
         <div class="small" id="lobbyPlayers"></div>
@@ -1083,14 +1082,14 @@ showRoom();
     function showRoom() {
       document.body.className = "view-room";
       document.getElementById("authCard").style.display = "none";
-      document.getElementById("roomCard").style.display = "block";
+      document.getElementById("roomCard").style.display = "flex";
       document.getElementById("gameArea").style.display = "none";
     }
 
     function showGame() {
       document.body.className = "view-game";
       document.getElementById("authCard").style.display = "none";
-      document.getElementById("roomCard").style.display = "block";
+      document.getElementById("roomCard").style.display = "flex";
       document.getElementById("gameArea").style.display = "flex";
     }
 
@@ -1244,7 +1243,6 @@ showRoom();
 
       roomId = code;
       document.getElementById("roomCodeDisplay").textContent = code;
-      document.getElementById("lobbyBox").style.display = "block";
       document.getElementById("roomCard").classList.add("in-lobby");
 
       unsubRoom = onSnapshot(doc(db, "games", code), (snap) => {
