@@ -775,6 +775,8 @@
         Online mode. Arrow keys move. S stays.
       </div>
 
+      <button id="backToRoomBtn" onclick="backToRoom()" style="display:none;margin-top:4px;">Back to Room</button>
+
       <button class="reset-bottom danger" onclick="confirmResetRoom()">Reset Room</button>
     </section>
 
@@ -1535,6 +1537,7 @@ showRoom();
           `${turnText} | Round ${state.fullRoundNumber}${gasText}`;
       } else if (state.status === "ended") {
         document.getElementById("info").textContent = "Game over. Hide final screen to inspect the board.";
+        document.getElementById("backToRoomBtn").style.display = "block";
         showGameOver();
       }
 
