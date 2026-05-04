@@ -7,442 +7,704 @@
   <link rel="shortcut icon" href="/assets/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="HiddenTowers" />
- 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hidden Towers Multiplayer</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --bg: #0b0820;
+      --card: rgba(255,255,255,0.07);
+      --card-border: rgba(255,255,255,0.13);
+      --gold: #fbbf24;
+      --gold2: #f97316;
+      --purple: #7c3aed;
+      --purple2: #a78bfa;
+      --green: #10b981;
+      --red: #ef4444;
+      --text: #eee8ff;
+      --muted: #9b8ec4;
+      --r: 16px;
+      --r2: 22px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
 
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #151820;
-      color: white;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 20px;
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      background-image:
+        radial-gradient(ellipse at 15% 55%, rgba(124,58,237,.18) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 15%, rgba(59,130,246,.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 95%, rgba(16,185,129,.07) 0%, transparent 40%);
     }
 
+    /* Starfield */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.85) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,.55) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,.35) 1px, transparent 1px);
+      background-size: 420px 420px, 260px 260px, 180px 180px;
+      background-position: 0 0, 55px 85px, 125px 35px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: .45;
+    }
+
+    /* ── App shell ── */
     .app {
-      width: min(95vw, 1000px);
-      text-align: center;
-    }
-
-    .setup-card, .auth-card, .room-card {
-      background: #202636;
-      padding: 16px;
-      border-radius: 16px;
-      margin-bottom: 16px;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .top, .setup-row, .auth-grid {
+      position: relative;
+      z-index: 1;
+      height: 100dvh;
+      height: 100vh;
       display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
+      padding: 10px;
+      gap: 8px;
+      overflow: hidden;
     }
 
-    .auth-grid {
-      align-items: stretch;
+    body.view-game .app { justify-content: flex-start; }
+
+    /* ── Typography ── */
+    h1, h2, h3, .ftitle { font-family: 'Fredoka One', cursive; font-weight: 400; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--r2);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
     }
 
-    .auth-box {
-      width: min(100%, 360px);
-      background: rgba(0,0,0,0.18);
-      border-radius: 14px;
-      padding: 14px;
-      text-align: left;
-    }
-
-    input, select, button {
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: none;
-      font-weight: bold;
-    }
-
-    .auth-box input {
+    /* ── Inputs ── */
+    input:not([type="color"]), select {
       width: 100%;
-      margin-bottom: 8px;
+      padding: 11px 14px;
+      border-radius: var(--r);
+      border: 2px solid var(--card-border);
+      background: rgba(0,0,0,.32);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+    }
+
+    input:not([type="color"])::placeholder { color: var(--muted); font-weight: 600; }
+    input:not([type="color"]):focus, select:focus {
+      border-color: var(--purple2);
+      box-shadow: 0 0 0 3px rgba(167,139,250,.2);
     }
 
     input[type="color"] {
+      width: 50px; height: 40px;
+      border-radius: 10px;
+      border: 2px solid var(--card-border);
+      background: transparent;
+      cursor: pointer;
       padding: 3px;
-      width: 52px;
-      height: 42px;
     }
 
+    select {
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239b8ec4' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    /* ── Buttons ── */
     button {
       cursor: pointer;
-      background: #ffd166;
-      color: #1b1b1b;
+      font-family: 'Fredoka One', cursive;
+      font-size: 16px;
+      border: none;
+      border-radius: var(--r);
+      padding: 11px 20px;
+      transition: transform .14s, box-shadow .14s, filter .14s;
     }
 
-    button:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
+    button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
+    button:active:not(:disabled) { transform: translateY(0); }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* Gold — default for unlabelled buttons */
+    button:not(.secondary):not(.danger):not(.tab-btn):not(.how-btn):not(.stay-btn):not(.google-btn) {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #1a0800;
+      box-shadow: 0 4px 14px rgba(251,191,36,.3);
+    }
+    button:not(.secondary):not(.danger):not(.tab-btn):not(.how-btn):not(.stay-btn):not(.google-btn):hover:not(:disabled) {
+      box-shadow: 0 6px 22px rgba(251,191,36,.5);
     }
 
     .secondary {
-      background: #334155;
-      color: white;
+      background: rgba(255,255,255,.1);
+      color: var(--text);
+      border: 1px solid var(--card-border);
     }
+    .secondary:hover:not(:disabled) { background: rgba(255,255,255,.16); }
 
     .danger {
-      background: #ff6b6b;
-      color: white;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(239,68,68,.3);
     }
 
-    .hidden-section {
-      display: none;
+    .stay-btn {
+      background: linear-gradient(135deg, var(--green), #059669);
+      color: #fff;
+      font-size: 16px;
+      padding: 10px 22px;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(16,185,129,.35);
+    }
+    .stay-btn:hover:not(:disabled) { box-shadow: 0 6px 20px rgba(16,185,129,.5); }
+
+    .google-btn {
+      background: #fff !important;
+      color: #1a1a2e !important;
+      font-family: 'Nunito', sans-serif !important;
+      font-size: 14px !important;
+      font-weight: 800 !important;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .google-btn::before {
+      content: 'G';
+      font-weight: 900; font-size: 17px; color: #4285f4;
     }
 
-    .info {
-      margin-bottom: 12px;
-      font-size: 18px;
-      font-weight: bold;
+    .how-btn {
+      background: rgba(255,255,255,.08);
+      color: var(--muted);
+      border: 1px solid var(--card-border);
+      font-size: 13px;
+      padding: 8px 16px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
     }
 
-    .scores {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
+    /* ── Hidden helper ── */
+    .hidden-section { display: none !important; }
+    .tab-hidden { display: none !important; }
+
+    /* ════════════════════════════
+       AUTH CARD
+    ════════════════════════════ */
+    #authCard {
+      width: 100%;
+      max-width: 480px;
+      padding: 20px 22px 16px;
+    }
+
+    .auth-hero { text-align: center; margin-bottom: 14px; }
+
+    .auth-hero .game-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(26px, 7vw, 44px);
+      background: linear-gradient(135deg, var(--gold), #f472b6, var(--purple2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 18px rgba(251,191,36,.4));
+      line-height: 1.1;
+    }
+
+    .auth-hero .sub {
+      font-size: clamp(11px, 2.5vw, 14px);
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .auth-tabs {
+      display: flex; gap: 6px;
+      background: rgba(0,0,0,.28);
+      border-radius: calc(var(--r) + 2px);
+      padding: 4px;
       margin-bottom: 14px;
     }
 
+    .tab-btn {
+      flex: 1; padding: 9px 10px;
+      border-radius: var(--r);
+      border: none;
+      font-family: 'Fredoka One', cursive;
+      font-size: 15px;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      transition: all .2s;
+      box-shadow: none !important;
+      transform: none !important;
+      filter: none !important;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--purple), #4f46e5);
+      color: #fff;
+      box-shadow: 0 3px 14px rgba(124,58,237,.45) !important;
+    }
+
+    .tab-panel { display: flex; flex-direction: column; gap: 8px; }
+
+    #authMessage {
+      font-size: 12px; color: #fca5a5;
+      text-align: center; min-height: 16px;
+      font-weight: 700; margin-top: 6px;
+    }
+
+    .auth-footer { text-align: center; margin-top: 8px; }
+
+    /* ════════════════════════════
+       ROOM CARD
+    ════════════════════════════ */
+    #roomCard {
+      width: 100%;
+      max-width: 860px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* JS sets display:block — override to flex */
+    #roomCard[style*="display: block"],
+    #roomCard[style*="display:block"] { display: flex !important; }
+
+    .room-header {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 10px;
+      padding: 9px 16px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--r2);
+      backdrop-filter: blur(12px);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .signed-label { font-size: 13px; color: var(--muted); font-weight: 700; }
+    .signed-label b { color: var(--gold); font-size: 14px; }
+
+    .room-main-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(18px, 4.5vw, 26px);
+      text-align: center;
+      background: linear-gradient(135deg, var(--gold), var(--purple2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      flex-shrink: 0;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .menu-box {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--r2);
+      padding: 14px 16px;
+      backdrop-filter: blur(10px);
+      display: flex; flex-direction: column; gap: 6px;
+    }
+
+    .menu-box h3 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 17px;
+      color: var(--gold);
+      margin-bottom: 2px;
+    }
+
+    .menu-box label {
+      font-size: 11px; color: var(--muted);
+      font-weight: 800; text-transform: uppercase;
+      letter-spacing: .5px; margin-top: 2px;
+    }
+
+    .color-row { display: flex; align-items: center; gap: 8px; }
+    .color-row span { font-size: 12px; color: var(--muted); }
+
+    .mode-options { display: grid; gap: 7px; }
+
+    .mode-card {
+      border: 2px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04);
+      border-radius: var(--r);
+      padding: 9px 11px;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+    .mode-card:hover { border-color: rgba(251,191,36,.4); }
+    .mode-card.active { border-color: var(--gold); background: rgba(251,191,36,.09); }
+    .mode-card strong {
+      font-family: 'Fredoka One', cursive; font-weight: 400;
+      font-size: 14px; display: block; color: #fff;
+    }
+    .mode-card span { color: var(--muted); font-size: 11px; line-height: 1.3; }
+
+    #lobbyBox {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--r2);
+      padding: 12px 16px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      flex-shrink: 0;
+    }
+
+    .lobby-label {
+      font-size: 10px; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--muted); font-weight: 800;
+    }
+
+    .room-code {
+      color: var(--gold);
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(26px, 8vw, 40px);
+      letter-spacing: 7px;
+      margin: 4px 0;
+      text-shadow: 0 0 22px rgba(251,191,36,.5);
+    }
+
+    .small { font-size: 12px; color: var(--muted); line-height: 1.5; font-weight: 600; }
+
+    .setup-row {
+      display: flex; align-items: center;
+      gap: 8px; flex-wrap: wrap; margin-top: 6px;
+    }
+
+    /* In-lobby: hide the main menu */
+    #roomCard.in-lobby .menu-grid,
+    #roomCard.in-lobby .room-main-title { display: none !important; }
+
+    /* In-game: collapse room card to just the header */
+    body.view-game #roomCard .menu-grid,
+    body.view-game #roomCard .room-main-title,
+    body.view-game #roomCard #lobbyBox { display: none !important; }
+
+    /* ════════════════════════════
+       GAME AREA
+    ════════════════════════════ */
+    #gameArea {
+      width: 100%;
+      max-width: 860px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    #gameArea[style*="display: flex"],
+    #gameArea[style*="display:flex"] { display: flex !important; }
+
+    .game-top-bar {
+      display: flex; align-items: center;
+      justify-content: center; gap: 10px;
+      width: 100%; flex-shrink: 0;
+    }
+
+    .info {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(13px, 3.2vw, 18px);
+      text-align: center;
+      padding: 8px 14px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--r);
+      flex: 1;
+      backdrop-filter: blur(10px);
+    }
+
+    .scores {
+      display: flex; justify-content: center;
+      gap: 7px; flex-wrap: wrap;
+      width: 100%; flex-shrink: 0;
+    }
+
     .score {
-      padding: 8px 12px;
-      border-radius: 12px;
-      color: white;
-      font-weight: bold;
-      border: 2px solid white;
+      padding: 5px 11px;
+      border-radius: 999px;
+      color: #fff;
+      font-weight: 800;
+      font-size: clamp(10px, 2.3vw, 13px);
+      border: 2px solid rgba(255,255,255,.25);
+      text-shadow: 0 1px 3px rgba(0,0,0,.5);
+    }
+
+    .board-wrap {
+      flex: 1; min-height: 0;
+      display: flex; align-items: center; justify-content: center;
+      width: 100%;
     }
 
     .board {
       display: grid;
-      gap: 6px;
-      background: #0b0d12;
-      padding: 8px;
-      border-radius: 16px;
-      margin: 0 auto;
-      width: min(92vw, 640px);
+      gap: 4px;
+      background: #050210;
+      padding: 6px;
+      border-radius: var(--r2);
+      border: 2px solid rgba(124,58,237,.35);
+      box-shadow: 0 0 40px rgba(124,58,237,.22), inset 0 0 20px rgba(0,0,0,.3);
+      width: min(92vw, calc(100dvh - 215px), calc(100vh - 215px));
       aspect-ratio: 1 / 1;
     }
 
     .tile {
       position: relative;
-      border-radius: 10px;
-      border: 2px solid #2c3345;
+      border-radius: 8px;
+      border: 1.5px solid rgba(100,80,200,.2);
       cursor: pointer;
       font-weight: bold;
       display: grid;
       place-items: center;
       overflow: hidden;
+      transition: filter .1s;
     }
 
-    .tile.locked {
-      cursor: not-allowed;
-      opacity: 0.95;
-    }
+    .tile:hover:not(.locked) { filter: brightness(1.22); }
+    .tile.locked { cursor: not-allowed; }
 
     .hidden {
-      background: #fff;
-      color: transparent;
-      border-color: #e5e5e5;
+      background: linear-gradient(135deg, #1b1450, #0d0b30);
+      border-color: rgba(167,139,250,.18);
     }
 
-    .revealed {
-      background: #2d3748;
-      color: white;
-    }
-
-    .tower {
-      color: white;
-    }
-
-    .gas-origin {
-      background: #0b7a34 !important;
-      color: white;
-    }
-
-    .infected {
-      background: #2ecc71 !important;
-      color: white;
-    }
-
-    .safe-infected {
-      color: white;
-    }
+    .revealed { background: #181035; color: #fff; }
+    .tower { color: #fff; }
+    .gas-origin { background: #065f46 !important; }
+    .infected { background: #064e3b !important; }
+    .safe-infected { color: #fff; }
 
     .safe-letter {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      font-size: clamp(22px, 4vw, 38px);
-      font-weight: 900;
-      color: white;
-      z-index: 2;
-      pointer-events: none;
-      text-shadow: 0 2px 4px black;
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      font-size: clamp(18px, 3.8vw, 34px);
+      font-weight: 900; color: #fff;
+      z-index: 2; pointer-events: none;
+      text-shadow: 0 2px 4px #000;
     }
 
     .gas-mark {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      font-size: clamp(22px, 4vw, 38px);
-      font-weight: 900;
-      z-index: 2;
-      pointer-events: none;
-      text-shadow: 0 2px 4px black;
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      font-size: clamp(18px, 3.8vw, 32px);
+      font-weight: 900; z-index: 2; pointer-events: none;
     }
 
     .tower-number {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      font-size: clamp(24px, 4vw, 42px);
-      font-weight: 900;
-      pointer-events: none;
-      z-index: 1;
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(18px, 3.8vw, 36px);
+      font-weight: 400; pointer-events: none; z-index: 1;
     }
 
     .progress-wrap {
       position: absolute;
-      left: 7px;
-      right: 7px;
-      bottom: 6px;
-      height: 7px;
-      background: rgba(255,255,255,0.35);
-      border-radius: 999px;
-      overflow: hidden;
-      z-index: 3;
+      left: 5px; right: 5px; bottom: 4px;
+      height: 5px;
+      background: rgba(255,255,255,.25);
+      border-radius: 999px; overflow: hidden; z-index: 3;
     }
 
     .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: white;
-      border-radius: 999px;
+      height: 100%; width: 0%;
+      background: #fff; border-radius: 999px;
     }
 
     .players {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      gap: 3px;
-      flex-wrap: wrap;
-      padding: 5px;
-      z-index: 4;
+      position: absolute; inset: 0;
+      display: flex; align-items: flex-start;
+      justify-content: center; gap: 2px;
+      flex-wrap: wrap; padding: 4px; z-index: 4;
     }
 
     .piece {
-      width: 22px;
-      height: 22px;
+      width: 20px; height: 20px;
       border-radius: 50%;
-      border: 2px solid white;
-      display: grid;
-      place-items: center;
-      font-size: 12px;
-      color: white;
-      text-shadow: 0 1px 2px black;
+      border: 2px solid rgba(255,255,255,.8);
+      display: grid; place-items: center;
+      font-size: 10px; color: #fff;
+      text-shadow: 0 1px 2px #000;
+      font-weight: 900;
     }
 
     .note {
-      color: #cbd5e1;
-      margin-top: 14px;
-      font-size: 14px;
-    }
-
-    .room-code {
-      color: #ffd166;
-      font-size: 32px;
-      font-weight: 900;
-      letter-spacing: 3px;
-      margin: 6px 0;
-    }
-
-    .game-over {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.78);
-      z-index: 20;
-      place-items: center;
-      padding: 20px;
-    }
-
-    .game-over-box {
-      background: #202636;
-      border-radius: 22px;
-      padding: 24px;
-      width: min(95vw, 650px);
-      border: 3px solid #ffd166;
-    }
-
-    .ranking {
-      display: grid;
-      gap: 10px;
-      margin: 18px 0;
-      text-align: left;
-    }
-
-    .rank-row {
-      padding: 12px;
-      border-radius: 14px;
-      background: #151820;
-      border: 2px solid #374151;
-    }
-
-    .stay-btn {
-      font-size: 18px;
-      padding: 16px 28px;
+      font-size: clamp(10px, 1.9vw, 12px);
+      color: var(--muted); text-align: center;
+      width: 100%; flex-shrink: 0; font-weight: 600;
     }
 
     .reset-bottom {
-      position: fixed;
-      bottom: 12px;
-      right: 12px;
-      padding: 12px 18px;
-      background: #ff6b6b;
-      color: white;
-      border-radius: 12px;
-      border: none;
-      font-weight: bold;
-      z-index: 40;
+      position: fixed; bottom: 12px; right: 12px;
+      padding: 9px 14px; font-size: 13px; z-index: 40;
     }
 
-    .small {
-      font-size: 13px;
-      color: #cbd5e1;
-      line-height: 1.45;
+    /* ════════════════════════════
+       GAME OVER MODAL
+    ════════════════════════════ */
+    .game-over {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.86);
+      z-index: 20; place-items: center;
+      padding: 20px;
+      backdrop-filter: blur(6px);
     }
 
-    .menu-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 14px;
-      margin: 16px 0;
-      text-align: left;
+    .game-over-box {
+      background: #0b0820;
+      border-radius: var(--r2);
+      padding: 26px;
+      width: min(95vw, 580px);
+      border: 2px solid var(--gold);
+      box-shadow: 0 0 60px rgba(251,191,36,.22);
+      max-height: 90dvh;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
-    .menu-box {
-      background: rgba(0,0,0,0.2);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      padding: 16px;
+    .game-over-box h2 {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(24px, 6vw, 38px);
+      background: linear-gradient(135deg, var(--gold), #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center; margin-bottom: 6px;
     }
 
-    .menu-box h3 {
-      margin: 0 0 12px;
+    .game-over-box p {
+      text-align: center; color: var(--muted);
+      margin-bottom: 14px; font-weight: 600; font-size: 14px;
     }
 
-    .menu-box label {
-      display: block;
-      color: #cbd5e1;
-      font-size: 13px;
-      margin-bottom: 6px;
-      font-weight: bold;
+    .ranking { display: grid; gap: 8px; margin: 12px 0; text-align: left; }
+
+    .rank-row {
+      padding: 11px 14px;
+      border-radius: var(--r);
+      background: rgba(255,255,255,.06);
+      border: 2px solid rgba(255,255,255,.1);
+      font-size: 13px; line-height: 1.5;
     }
 
-    .menu-box select,
-    .menu-box input {
-      width: 100%;
-      margin-bottom: 10px;
+    .rank-row strong {
+      font-family: 'Fredoka One', cursive;
+      font-size: 15px; display: block;
     }
 
-    .mode-options {
-      display: grid;
-      gap: 10px;
-      margin-bottom: 10px;
+    .go-actions {
+      display: flex; gap: 10px;
+      justify-content: center; flex-wrap: wrap;
+      margin-top: 14px;
     }
 
-    .mode-card {
-      border: 2px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.05);
-      border-radius: 14px;
-      padding: 12px;
-      cursor: pointer;
-      transition: 0.15s ease;
+    /* ════════════════════════════
+       RESPONSIVE
+    ════════════════════════════ */
+    @media (max-width: 600px) {
+      .app { padding: 8px; gap: 6px; }
+
+      #authCard { padding: 14px 14px 12px; }
+      .auth-hero { margin-bottom: 10px; }
+
+      .menu-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .menu-box { padding: 11px 12px; gap: 5px; }
+      .menu-box h3 { font-size: 15px; }
+
+      .board {
+        width: min(92vw, calc(100dvh - 205px), calc(100vh - 205px));
+        gap: 3px; padding: 5px;
+      }
     }
 
-    .mode-card.active {
-      border-color: #ffd166;
-      background: rgba(255,209,102,0.12);
+    @media (max-width: 380px) {
+      .menu-grid { grid-template-columns: 1fr; }
     }
 
-    .mode-card strong {
-      color: #ffffff;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .mode-card span {
-      color: #cbd5e1;
-      font-size: 13px;
-      line-height: 1.4;
-    }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 999px; }
   </style>
 </head>
 
-<body>
+<body class="view-auth">
   <div class="app">
-    <a href="/how-to-play" target="_blank">
-  <button style="margin-bottom: 10px;">
-    How to Play
-  </button>
-</a>
-    
-    <h1>Hidden Towers Multiplayer</h1>
 
-    <section class="auth-card" id="authCard">
-      <h2>Account</h2>
-      <p class="small">Create an account or log in. Usernames are reserved, so no two accounts can use the same username.</p>
-
-      <div class="auth-grid">
-        <div class="auth-box">
-          <h3>Sign Up</h3>
-          <input id="signupUsername" placeholder="Username">
-          <input id="signupEmail" type="email" placeholder="Email">
-          <input id="signupPassword" type="password" placeholder="Password">
-          <button onclick="signUp()">Create Account</button>
-          <button class="secondary" onclick="googleLogin()" style="width:100%; margin-top:8px;">Sign up with Google</button>
-        </div>
-
-        <div class="auth-box">
-          <h3>Login</h3>
-          <input id="loginEmail" type="email" placeholder="Email">
-          <input id="loginPassword" type="password" placeholder="Password">
-          <button onclick="login()">Login</button>
-          <button class="secondary" onclick="googleLogin()" style="width:100%; margin-top:8px;">Sign in with Google</button>
-        </div>
+    <!-- ══ AUTH CARD ══ -->
+    <section class="card" id="authCard">
+      <div class="auth-hero">
+        <div class="game-title">&#127984; Hidden Towers</div>
+        <div class="sub">Multiplayer Adventure</div>
       </div>
 
-      <p class="small" id="authMessage"></p>
+      <div class="auth-tabs">
+        <button class="tab-btn active" onclick="switchAuthTab('signup')">Sign Up</button>
+        <button class="tab-btn" onclick="switchAuthTab('login')">Log In</button>
+      </div>
+
+      <div id="tabSignup" class="tab-panel">
+        <input id="signupUsername" placeholder="Username">
+        <input id="signupEmail" type="email" placeholder="Email">
+        <input id="signupPassword" type="password" placeholder="Password">
+        <button onclick="signUp()" style="width:100%">Create Account</button>
+        <button class="google-btn" onclick="googleLogin()" style="width:100%">Sign up with Google</button>
+      </div>
+
+      <div id="tabLogin" class="tab-panel tab-hidden">
+        <input id="loginEmail" type="email" placeholder="Email">
+        <input id="loginPassword" type="password" placeholder="Password">
+        <button onclick="login()" style="width:100%">Log In</button>
+        <button class="google-btn" onclick="googleLogin()" style="width:100%">Sign in with Google</button>
+      </div>
+
+      <p id="authMessage"></p>
+
+      <div class="auth-footer">
+        <a href="/how-to-play" target="_blank">
+          <button class="how-btn">&#10067; How to Play</button>
+        </a>
+      </div>
     </section>
 
-    <section class="room-card hidden-section" id="roomCard">
-      <div class="top">
-        <div>Signed in as <b id="signedInAs"></b></div>
-        <button class="secondary" onclick="logout()">Logout</button>
+    <!-- ══ ROOM / LOBBY CARD ══ -->
+    <section id="roomCard">
+      <div class="room-header">
+        <span class="signed-label">Signed in as <b id="signedInAs"></b></span>
+        <button class="secondary" onclick="logout()" style="padding:7px 14px;font-size:14px;">Logout</button>
       </div>
 
-      <h2>Main Menu</h2>
+      <div class="room-main-title">&#127942; Main Menu</div>
 
       <div class="menu-grid">
         <div class="menu-box">
-          <h3>Create Game</h3>
+          <h3>&#127968; Create Game</h3>
 
           <label for="roomPlayerCount">Players</label>
           <select id="roomPlayerCount" onchange="updateGameTypeOptions()">
@@ -455,58 +717,82 @@
           <div class="mode-options" id="gameTypeOptions"></div>
 
           <label for="hostPlayerColor">Your Color</label>
-          <input id="hostPlayerColor" type="color" value="#e03131">
+          <div class="color-row">
+            <input id="hostPlayerColor" type="color" value="#e03131">
+            <span>Pick a color</span>
+          </div>
 
-          <button onclick="createRoom()">Create Room</button>
+          <button onclick="createRoom()" style="width:100%;margin-top:4px;">Create Room</button>
         </div>
 
         <div class="menu-box">
-          <h3>Join Game</h3>
+          <h3>&#128272; Join Game</h3>
 
           <label for="joinCode">Room Code</label>
-          <input id="joinCode" placeholder="Room code">
+          <input id="joinCode" placeholder="Enter code">
 
           <label for="joinPlayerColor">Your Color</label>
-          <input id="joinPlayerColor" type="color" value="#1971c2">
+          <div class="color-row">
+            <input id="joinPlayerColor" type="color" value="#1971c2">
+            <span>Pick a color</span>
+          </div>
 
-          <button onclick="joinRoom()">Join Room</button>
+          <button onclick="joinRoom()" style="width:100%;margin-top:4px;">Join Room</button>
         </div>
       </div>
 
       <div id="lobbyBox" class="hidden-section">
-        <div>Room code:</div>
+        <div class="lobby-label">Room Code</div>
         <div class="room-code" id="roomCodeDisplay"></div>
         <div class="small" id="lobbyPlayers"></div>
-        <button id="startRoomBtn" onclick="startRoomGame()">Start Game</button>
+        <button id="startRoomBtn" onclick="startRoomGame()" style="margin-top:10px;">Start Game</button>
       </div>
     </section>
 
-    <section class="hidden-section" id="gameArea">
-      <div class="top">
+    <!-- ══ GAME AREA ══ -->
+    <section id="gameArea">
+      <div class="game-top-bar">
+        <div class="info" id="info">Waiting...</div>
         <button class="stay-btn" onclick="stayTurn()">Stay</button>
       </div>
 
-      <button class="reset-bottom" onclick="confirmResetRoom()">Reset Room</button>
-
-      <div class="info" id="info">Waiting...</div>
       <div class="scores" id="scores"></div>
-      <div class="board" id="board"></div>
+
+      <div class="board-wrap">
+        <div class="board" id="board"></div>
+      </div>
 
       <div class="note" id="gameNote">
-        Online mode. Only the current player can move from their device. Arrow keys move. S stays.
+        Online mode. Arrow keys move. S stays.
       </div>
+
+      <button class="reset-bottom danger" onclick="confirmResetRoom()">Reset Room</button>
     </section>
+
   </div>
 
+  <!-- ══ GAME OVER MODAL ══ -->
   <div class="game-over" id="gameOver">
     <div class="game-over-box">
       <h2 id="winnerTitle"></h2>
       <p id="winnerReason"></p>
       <div class="ranking" id="finalRanking"></div>
-      <button onclick="hideGameOver()">Hide Final Screen</button>
-      <button onclick="backToRoom()">Back to Room</button>
+      <div class="go-actions">
+        <button class="secondary" onclick="hideGameOver()">Hide Final Screen</button>
+        <button onclick="backToRoom()">Back to Room</button>
+      </div>
     </div>
   </div>
+
+  <script>
+    function switchAuthTab(tab) {
+      document.getElementById('tabSignup').classList.toggle('tab-hidden', tab !== 'signup');
+      document.getElementById('tabLogin').classList.toggle('tab-hidden', tab !== 'login');
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (i === 0) === (tab === 'signup'));
+      });
+    }
+  </script>
 
   <script type="module">
 
@@ -582,11 +868,11 @@
         box.innerHTML = `
           <div class="mode-card ${selectedGameType === "classic" ? "active" : ""}" onclick="selectGameType('classic')">
             <strong>Classic</strong>
-            <span>8x8 grid, 7 towers, win by 5000 points or 4 towers.</span>
+            <span>8x8 grid, 7 towers, win by 5000 pts or 4 towers.</span>
           </div>
           <div class="mode-card ${selectedGameType === "poison" ? "active" : ""}" onclick="selectGameType('poison')">
             <strong>Poison Gas</strong>
-            <span>6x6 grid, 4 towers, poison gas, win by 2000 points.</span>
+            <span>6x6 grid, 4 towers, poison gas, win by 2000 pts.</span>
           </div>
         `;
       } else {
@@ -594,7 +880,7 @@
         box.innerHTML = `
           <div class="mode-card active" onclick="selectGameType('classic')">
             <strong>Classic</strong>
-            <span>8x8 grid, 7 towers, win by 5000 points or 4 towers.</span>
+            <span>8x8 grid, 7 towers, win by 5000 pts or 4 towers.</span>
           </div>
         `;
       }
@@ -637,7 +923,7 @@
       const password = document.getElementById("signupPassword").value;
 
       if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
-        setAuthMessage("Username must be 3-16 characters and only use letters, numbers, or underscores.");
+        setAuthMessage("Username must be 3-16 characters: letters, numbers, underscores.");
         return;
       }
 
@@ -726,7 +1012,7 @@
 
       if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
         await signOut(auth);
-        setAuthMessage("Username must be 3-16 characters and only use letters, numbers, or underscores.");
+        setAuthMessage("Username must be 3-16 characters: letters, numbers, underscores.");
         return;
       }
 
@@ -787,21 +1073,25 @@ showRoom();
     }
 
     function showAuth() {
-      document.getElementById("authCard").style.display = "block";
+      document.body.className = "view-auth";
+      document.getElementById("authCard").style.display = "";
       document.getElementById("roomCard").style.display = "none";
       document.getElementById("gameArea").style.display = "none";
       document.getElementById("gameOver").style.display = "none";
     }
 
     function showRoom() {
+      document.body.className = "view-room";
       document.getElementById("authCard").style.display = "none";
       document.getElementById("roomCard").style.display = "block";
+      document.getElementById("gameArea").style.display = "none";
     }
 
     function showGame() {
+      document.body.className = "view-game";
       document.getElementById("authCard").style.display = "none";
       document.getElementById("roomCard").style.display = "block";
-      document.getElementById("gameArea").style.display = "block";
+      document.getElementById("gameArea").style.display = "flex";
     }
 
     function roomCode() {
@@ -955,6 +1245,7 @@ showRoom();
       roomId = code;
       document.getElementById("roomCodeDisplay").textContent = code;
       document.getElementById("lobbyBox").style.display = "block";
+      document.getElementById("roomCard").classList.add("in-lobby");
 
       unsubRoom = onSnapshot(doc(db, "games", code), (snap) => {
         if (!snap.exists()) {
@@ -979,21 +1270,21 @@ showRoom();
       document.getElementById("roomCodeDisplay").textContent = state.code;
 
       const playerList = state.players.map(p => {
-        return `${p.username} <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${p.color};border:1px solid white;vertical-align:middle;"></span>`;
+        return `${p.username} <span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${p.color};border:1px solid white;vertical-align:middle;"></span>`;
       }).join(", ");
 
       const me = state.players.find(p => p.uid === currentUser?.uid);
       const colorEditor = me && state.status === "lobby"
-        ? `<div class="setup-row" style="margin-top:10px;">
-             <label class="small">Your lobby color</label>
+        ? `<div class="setup-row">
+             <label class="small" style="margin:0">Your color</label>
              <input id="lobbyColorPicker" type="color" value="${me.color}">
-             <button onclick="updateMyLobbyColor()">Save Color</button>
+             <button onclick="updateMyLobbyColor()" style="padding:6px 12px;font-size:13px;">Save</button>
            </div>`
         : "";
 
       const typeLabel = state.gameType === "poison" ? "Poison Gas" : "Classic";
       document.getElementById("lobbyPlayers").innerHTML =
-        `Game Type: ${typeLabel}<br>Players (${state.players.length}/${state.playerCount}): ${playerList}${colorEditor}`;
+        `<strong style="color:var(--gold)">${typeLabel}</strong> &nbsp;|&nbsp; Players (${state.players.length}/${state.playerCount}): ${playerList}${colorEditor}`;
 
       document.getElementById("startRoomBtn").disabled =
         currentUser.uid !== state.hostUid ||
@@ -1188,8 +1479,8 @@ showRoom();
       }
 
       document.getElementById("gameNote").textContent = state.twoPlayerMode
-        ? "Poison Gas mode: 2 players, 6x6, 4 towers, first to 2000. Poison gas spreads after revealed."
-        : `${state.playerCount}-player Classic mode: 8x8, 7 towers, first to 5000 points or 4 towers. Arrow keys move. S stays.`;
+        ? "Poison Gas mode: 2 players, 6x6, 4 towers, first to 2000. Gas spreads after revealed."
+        : `${state.playerCount}-player Classic: 8x8, 7 towers, first to 5000 or 4 towers. Arrow keys / S stays.`;
     }
 
     function renderScores() {
@@ -1687,10 +1978,8 @@ showRoom();
         div.style.borderColor = player.color;
 
         div.innerHTML = `
-          <strong>#${index + 1} ${player.username}</strong><br>
-          Points: ${player.points}<br>
-          Towers Owned: ${countOwnedTowersIn(state, player.id)}<br>
-          Highest Tower: Level ${highestTowerLevelIn(state, player.id)}
+          <strong>#${index + 1} ${player.username}</strong>
+          Points: ${player.points} &nbsp;|&nbsp; Towers: ${countOwnedTowersIn(state, player.id)} &nbsp;|&nbsp; Highest: Lv ${highestTowerLevelIn(state, player.id)}
         `;
 
         rankingBox.appendChild(div);
