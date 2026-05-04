@@ -872,7 +872,8 @@
       const box = document.getElementById("gameTypeOptions");
       if (!box) return;
 
-      if (selectedGameType !== "classic" && selectedGameType !== "poison") {
+      if (count === 4 && selectedGameType === "noname") selectedGameType = "poison";
+      if (selectedGameType !== "classic" && selectedGameType !== "poison" && selectedGameType !== "noname") {
         selectedGameType = "poison";
       }
 
@@ -886,6 +887,16 @@
         3: "7x7 grid, 6 towers, poison gas, win by 3000 pts or 3 towers.",
         4: "8x8 grid, 7 towers, poison gas, win by 4000 pts or 4 towers."
       };
+      const nonameDescs = {
+        2: "8x8 grid, 6 towers pre-revealed. Steal enemy towers on contact. Own 4 to win or last one with points.",
+        3: "8x8 grid, 8 towers pre-revealed. Steal enemy towers on contact. Own 6 to win or last one with points."
+      };
+
+      const nonameCard = count <= 3 ? `
+        <div class="mode-card ${selectedGameType === "noname" ? "active" : ""}" onclick="selectGameType('noname')">
+          <strong>No Name</strong>
+          <span>${nonameDescs[count]}</span>
+        </div>` : "";
 
       box.innerHTML = `
         <div class="mode-card ${selectedGameType === "classic" ? "active" : ""}" onclick="selectGameType('classic')">
@@ -896,10 +907,13 @@
           <strong>Poison Gas</strong>
           <span>${poisonDescs[count]}</span>
         </div>
+        ${nonameCard}
       `;
     }
 
     function selectGameType(type) {
+      const count = parseInt(document.getElementById("roomPlayerCount").value, 10);
+      if (type === "noname" && count === 4) return;
       selectedGameType = type;
       updateGameTypeOptions();
     }
@@ -1176,7 +1190,8 @@ showRoom();
         x: null,
         y: null,
         points: 0,
-        infected: false
+        infected: false,
+        eliminated: false
       });
 
       await setDoc(ref, blank);
@@ -1220,7 +1235,8 @@ showRoom();
               x: null,
               y: null,
               points: 0,
-              infected: false
+              infected: false,
+              eliminated: false
             });
           }
 
@@ -1257,18 +1273,25 @@ showRoom();
 
     function blankGame(code, playerCount, gameType = "classic") {
       const poisonMode = gameType === "poison";
+      const noNameMode = gameType === "noname";
 
-      let size, towerCount, pointsToWin, useTowerWin, towersToWin;
-      if (playerCount === 2) {
-        size = 6; towerCount = 4;
+      let size, towerCount, pointsToWin, useTowerWin, towersToWin, startingPoints;
+      if (noNameMode) {
+        size = 8;
+        if (playerCount === 2) { towerCount = 6; towersToWin = 4; startingPoints = 2000; }
+        else                   { towerCount = 8; towersToWin = 6; startingPoints = 3000; }
+        pointsToWin = 999999;
+        useTowerWin = true;
+      } else if (playerCount === 2) {
+        size = 6; towerCount = 4; startingPoints = 0;
         if (poisonMode) { pointsToWin = 2000; useTowerWin = false; towersToWin = 0; }
         else             { pointsToWin = 3000; useTowerWin = false; towersToWin = 0; }
       } else if (playerCount === 3) {
-        size = 7; towerCount = 6;
+        size = 7; towerCount = 6; startingPoints = 0;
         if (poisonMode) { pointsToWin = 3000; useTowerWin = true; towersToWin = 3; }
         else             { pointsToWin = 4000; useTowerWin = true; towersToWin = 3; }
       } else {
-        size = 8; towerCount = 7;
+        size = 8; towerCount = 7; startingPoints = 0;
         if (poisonMode) { pointsToWin = 4000; useTowerWin = true; towersToWin = 4; }
         else             { pointsToWin = 5000; useTowerWin = true; towersToWin = 4; }
       }
@@ -1281,11 +1304,13 @@ showRoom();
         status: "lobby",
         playerCount,
         gameType,
+        noNameMode,
         size,
         towerCount,
         pointsToWin,
         useTowerWin,
         towersToWin,
+        startingPoints,
         twoPlayerMode: poisonMode,
         currentPlayer: 0,
         fullRoundNumber: 1,
@@ -1346,7 +1371,7 @@ showRoom();
            </div>`
         : "";
 
-      const typeLabel = state.gameType === "poison" ? "Poison Gas" : "Classic";
+      const typeLabel = state.gameType === "poison" ? "Poison Gas" : state.gameType === "noname" ? "No Name" : "Classic";
       document.getElementById("lobbyPlayers").innerHTML =
         `<strong style="color:var(--gold)">${typeLabel}</strong> &nbsp;|&nbsp; Players (${state.players.length}/${state.playerCount}): ${playerList}${colorEditor}`;
 
@@ -1407,7 +1432,8 @@ showRoom();
         x: starts[i].x,
         y: starts[i].y,
         points: 0,
-        infected: false
+        infected: false,
+        eliminated: false
       }));
 
       next.players.forEach(player => {
@@ -1415,6 +1441,20 @@ showRoom();
       });
 
       placeTowersIn(next, starts);
+
+      if (next.noNameMode) {
+        const towerTiles = next.tiles.filter(t => t.type === "tower");
+        towerTiles.forEach(t => { t.revealed = true; });
+        shuffle(towerTiles);
+        towerTiles.forEach((t, i) => {
+          const playerIdx = Math.floor(i / 2);
+          if (playerIdx < next.players.length) {
+            t.owner = playerIdx;
+            t.level = 1;
+          }
+        });
+        next.players.forEach(p => { p.points = next.startingPoints; });
+      }
 
       if (next.twoPlayerMode) {
         placeGasIn(next, starts);
@@ -1543,7 +1583,10 @@ showRoom();
       }
 
       const towerNote = state.useTowerWin ? ` or ${state.towersToWin} towers` : "";
-      if (state.twoPlayerMode) {
+      if (state.noNameMode) {
+        document.getElementById("gameNote").textContent =
+          `${state.playerCount}-player No Name: ${state.size}x${state.size}, ${state.towerCount} towers pre-revealed. Own ${state.towersToWin} towers or be last with points to win.`;
+      } else if (state.twoPlayerMode) {
         document.getElementById("gameNote").textContent =
           `${state.playerCount}-player Poison Gas: ${state.size}x${state.size}, ${state.towerCount} towers, first to ${state.pointsToWin} pts${towerNote}. Gas spreads after revealed.`;
       } else {
@@ -1561,7 +1604,7 @@ showRoom();
         div.className = "score";
         div.style.background = player.color;
         div.textContent =
-          `${player.username}: ${player.points} pts | Towers: ${countOwnedTowersIn(state, player.id)}${player.infected ? " | Infected" : ""}`;
+          `${player.username}: ${player.points} pts | Towers: ${countOwnedTowersIn(state, player.id)}${player.infected ? " | Infected" : ""}${player.eliminated ? " | OUT" : ""}`;
         scores.appendChild(div);
       });
     }
@@ -1746,6 +1789,38 @@ showRoom();
 
     function handleTowerStep(s, player, tile, justMovedOntoTile) {
       if (tile.type !== "tower") return;
+
+      if (s.noNameMode) {
+        if (tile.owner === null) {
+          tile.owner = player.id;
+          tile.level = 1;
+          tile.ownerProgress = 0;
+          tile.invaderId = null;
+          tile.invaderProgress = 0;
+          return;
+        }
+        if (tile.owner === player.id) {
+          if (!justMovedOntoTile && tile.level < 8) {
+            tile.ownerProgress++;
+            if (tile.ownerProgress >= tile.level) {
+              tile.level++;
+              tile.ownerProgress = 0;
+            }
+          }
+          return;
+        }
+        if (!justMovedOntoTile) return;
+        const prevOwner = s.players.find(p => p.id === tile.owner);
+        if (prevOwner) {
+          prevOwner.points = Math.max(0, prevOwner.points - 100);
+          if (prevOwner.points === 0) prevOwner.eliminated = true;
+        }
+        tile.owner = player.id;
+        tile.invaderId = null;
+        tile.invaderProgress = 0;
+        tile.ownerProgress = 0;
+        return;
+      }
 
       if (tile.owner === null) {
         tile.owner = player.id;
@@ -1976,10 +2051,35 @@ showRoom();
         s.fullRoundNumber++;
         expandGas(s);
       }
+
+      if (s.noNameMode) {
+        let guard = 0;
+        while (s.players[s.currentPlayer]?.eliminated && guard < s.players.length) {
+          s.currentPlayer++;
+          if (s.currentPlayer >= s.players.length) {
+            s.currentPlayer = 0;
+            s.fullRoundNumber++;
+          }
+          guard++;
+        }
+      }
     }
 
     function checkWinner(s, player) {
       const ownedTowers = countOwnedTowersIn(s, player.id);
+
+      if (s.noNameMode) {
+        if (ownedTowers >= s.towersToWin) {
+          endGameInState(s, player, `${player.username} owns ${ownedTowers} of ${s.towerCount} towers.`);
+          return true;
+        }
+        const alive = s.players.filter(p => !p.eliminated);
+        if (alive.length === 1) {
+          endGameInState(s, alive[0], `${alive[0].username} is the last player with points.`);
+          return true;
+        }
+        return false;
+      }
 
       if (player.points >= s.pointsToWin) {
         endGameInState(s, player, `${player.username} reached ${s.pointsToWin} points.`);
@@ -2030,7 +2130,8 @@ showRoom();
         x: null,
         y: null,
         points: 0,
-        infected: false
+        infected: false,
+        eliminated: false
       }));
 
       await updateDoc(doc(db, "games", roomId), stripServerTimestamp(reset));
@@ -2131,6 +2232,14 @@ showRoom();
 
     function clone(obj) {
       return JSON.parse(JSON.stringify(obj));
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
     }
 
     document.addEventListener("keydown", function(event) {
