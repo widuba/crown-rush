@@ -321,6 +321,71 @@
       color: #cbd5e1;
       line-height: 1.45;
     }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+      text-align: left;
+    }
+
+    .menu-box {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .menu-box h3 {
+      margin: 0 0 12px;
+    }
+
+    .menu-box label {
+      display: block;
+      color: #cbd5e1;
+      font-size: 13px;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    .menu-box select,
+    .menu-box input {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .mode-options {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .mode-card {
+      border: 2px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      border-radius: 14px;
+      padding: 12px;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .mode-card.active {
+      border-color: #ffd166;
+      background: rgba(255,209,102,0.12);
+    }
+
+    .mode-card strong {
+      color: #ffffff;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .mode-card span {
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.4;
+    }
   </style>
 </head>
 
@@ -372,25 +437,39 @@
         <button class="secondary" onclick="logout()">Logout</button>
       </div>
 
-      <h2>Room</h2>
+      <h2>Main Menu</h2>
 
-      <div class="setup-row">
-        <select id="roomPlayerCount">
-          <option value="2">2 Players</option>
-          <option value="3">3 Players</option>
-          <option value="4">4 Players</option>
-        </select>
+      <div class="menu-grid">
+        <div class="menu-box">
+          <h3>Create Game</h3>
 
-        <label class="small">Host color</label>
-        <input id="hostPlayerColor" type="color" value="#e03131">
-        <button onclick="createRoom()">Create Room</button>
-      </div>
+          <label for="roomPlayerCount">Players</label>
+          <select id="roomPlayerCount" onchange="updateGameTypeOptions()">
+            <option value="2">2 Players</option>
+            <option value="3">3 Players</option>
+            <option value="4">4 Players</option>
+          </select>
 
-      <div class="setup-row">
-        <input id="joinCode" placeholder="Room code">
-        <label class="small">Join color</label>
-        <input id="joinPlayerColor" type="color" value="#1971c2">
-        <button onclick="joinRoom()">Join Room</button>
+          <label>Game Type</label>
+          <div class="mode-options" id="gameTypeOptions"></div>
+
+          <label for="hostPlayerColor">Your Color</label>
+          <input id="hostPlayerColor" type="color" value="#e03131">
+
+          <button onclick="createRoom()">Create Room</button>
+        </div>
+
+        <div class="menu-box">
+          <h3>Join Game</h3>
+
+          <label for="joinCode">Room Code</label>
+          <input id="joinCode" placeholder="Room code">
+
+          <label for="joinPlayerColor">Your Color</label>
+          <input id="joinPlayerColor" type="color" value="#1971c2">
+
+          <button onclick="joinRoom()">Join Room</button>
+        </div>
       </div>
 
       <div id="lobbyBox" class="hidden-section">
@@ -470,6 +549,7 @@
     let roomId = null;
     let unsubRoom = null;
     let state = null;
+    let selectedGameType = "poison";
 
     window.signUp = signUp;
     window.login = login;
@@ -483,6 +563,46 @@
     window.hideGameOver = hideGameOver;
     window.backToRoom = backToRoom;
     window.updateMyLobbyColor = updateMyLobbyColor;
+    window.updateGameTypeOptions = updateGameTypeOptions;
+    window.selectGameType = selectGameType;
+
+    updateGameTypeOptions();
+
+    function updateGameTypeOptions() {
+      const count = parseInt(document.getElementById("roomPlayerCount").value, 10);
+      const box = document.getElementById("gameTypeOptions");
+      if (!box) return;
+
+      if (count === 2) {
+        if (selectedGameType !== "classic" && selectedGameType !== "poison") {
+          selectedGameType = "poison";
+        }
+
+        box.innerHTML = `
+          <div class="mode-card ${selectedGameType === "classic" ? "active" : ""}" onclick="selectGameType('classic')">
+            <strong>Classic</strong>
+            <span>8x8 grid, 7 towers, win by 5000 points or 4 towers.</span>
+          </div>
+          <div class="mode-card ${selectedGameType === "poison" ? "active" : ""}" onclick="selectGameType('poison')">
+            <strong>Poison Gas</strong>
+            <span>6x6 grid, 4 towers, poison gas, win by 2000 points.</span>
+          </div>
+        `;
+      } else {
+        selectedGameType = "classic";
+        box.innerHTML = `
+          <div class="mode-card active" onclick="selectGameType('classic')">
+            <strong>Classic</strong>
+            <span>8x8 grid, 7 towers, win by 5000 points or 4 towers.</span>
+          </div>
+        `;
+      }
+    }
+
+    function selectGameType(type) {
+      selectedGameType = type;
+      updateGameTypeOptions();
+    }
 
     onAuthStateChanged(auth, async (user) => {
   currentUser = user;
@@ -530,15 +650,6 @@
           if (usernameSnap.exists()) {
             throw new Error("That username is already taken.");
           }
-          currentProfile = {
-  uid: cred.user.uid,
-  username,
-  usernameKey: key,
-  email
-};
-
-document.getElementById("signedInAs").textContent = username;
-showRoom();
         });
 
         const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -564,6 +675,15 @@ showRoom();
           });
         });
 
+        currentProfile = {
+          uid: cred.user.uid,
+          username,
+          usernameKey: key,
+          email
+        };
+
+        document.getElementById("signedInAs").textContent = username;
+        showRoom();
         setAuthMessage("Account created.");
       } catch (err) {
         setAuthMessage(err.message);
@@ -706,7 +826,8 @@ showRoom();
         snap = await getDoc(ref);
       }
 
-      const blank = blankGame(code, playerCount);
+      const gameType = playerCount === 2 ? selectedGameType : "classic";
+      const blank = blankGame(code, playerCount, gameType);
       blank.hostUid = currentUser.uid;
       blank.players.push({
         uid: currentUser.uid,
@@ -795,8 +916,8 @@ showRoom();
       return preferred || fallbackColors[0];
     }
 
-    function blankGame(code, playerCount) {
-      const two = playerCount === 2;
+    function blankGame(code, playerCount, gameType = "classic") {
+      const poisonMode = playerCount === 2 && gameType === "poison";
 
       return {
         code,
@@ -805,11 +926,12 @@ showRoom();
         hostUid: null,
         status: "lobby",
         playerCount,
-        size: two ? 6 : 8,
-        towerCount: two ? 4 : 7,
-        pointsToWin: two ? 2000 : 5000,
-        useTowerWin: !two,
-        twoPlayerMode: two,
+        gameType,
+        size: poisonMode ? 6 : 8,
+        towerCount: poisonMode ? 4 : 7,
+        pointsToWin: poisonMode ? 2000 : 5000,
+        useTowerWin: !poisonMode,
+        twoPlayerMode: poisonMode,
         currentPlayer: 0,
         fullRoundNumber: 1,
         finalWinnerId: null,
@@ -868,8 +990,9 @@ showRoom();
            </div>`
         : "";
 
+      const typeLabel = state.gameType === "poison" ? "Poison Gas" : "Classic";
       document.getElementById("lobbyPlayers").innerHTML =
-        `Players (${state.players.length}/${state.playerCount}): ${playerList}${colorEditor}`;
+        `Game Type: ${typeLabel}<br>Players (${state.players.length}/${state.playerCount}): ${playerList}${colorEditor}`;
 
       document.getElementById("startRoomBtn").disabled =
         currentUser.uid !== state.hostUid ||
@@ -1064,8 +1187,8 @@ showRoom();
       }
 
       document.getElementById("gameNote").textContent = state.twoPlayerMode
-        ? "2-player online mode: 6x6, 4 towers, first to 2000. Poison gas spreads after revealed."
-        : "Online mode: first to 5000 points or 4 towers. Arrow keys move. S stays.";
+        ? "Poison Gas mode: 2 players, 6x6, 4 towers, first to 2000. Poison gas spreads after revealed."
+        : `${state.playerCount}-player Classic mode: 8x8, 7 towers, first to 5000 points or 4 towers. Arrow keys move. S stays.`;
     }
 
     function renderScores() {
@@ -1532,7 +1655,7 @@ showRoom();
         return;
       }
 
-      const reset = blankGame(state.code, state.playerCount);
+      const reset = blankGame(state.code, state.playerCount, state.gameType || "classic");
       reset.hostUid = state.hostUid;
       reset.players = state.players.map((p, index) => ({
         uid: p.uid,
