@@ -1609,7 +1609,21 @@ showRoom();
         }
 
         if ((state.infectedTiles || []).includes(key) && !(state.gasOrigin && state.gasOrigin.x === tile.x && state.gasOrigin.y === tile.y)) {
-          div.className += " infected";
+          if (tile.type === "tower") {
+            div.className += " infected";
+          } else {
+            const safeIds = getSafeIdsForKey(state, key);
+            if (safeIds.length > 0) {
+              div.className += " safe-infected";
+              applySafeTileVisual(div, safeIds);
+              const safeLetter = document.createElement("div");
+              safeLetter.className = "safe-letter";
+              safeLetter.textContent = safeIds.map(id => getPlayerInitialById(state, id)).join("");
+              div.appendChild(safeLetter);
+            } else {
+              div.className += " infected";
+            }
+          }
         }
 
         if (!isMyTurn() || state.status !== "playing") {
@@ -1842,7 +1856,38 @@ showRoom();
     }
 
     function rebuildInfectionSafeZones(s) {
-      s.infectionSafeZones = {};
+      const safe = {};
+      const infectedSet = new Set(s.infectedTiles || []);
+
+      (s.tiles || []).forEach(tile => {
+        if (tile.type !== "tower" || tile.owner === null || tile.owner === undefined) return;
+
+        const directions = [
+          { dx: 0, dy: -1 }, { dx: 0, dy: 1 },
+          { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
+        ];
+
+        directions.forEach(dir => {
+          let x = tile.x + dir.dx;
+          let y = tile.y + dir.dy;
+
+          while (x >= 0 && y >= 0 && x < s.size && y < s.size) {
+            const key = tileKey(x, y);
+            const isOrigin = s.gasOrigin && s.gasOrigin.x === x && s.gasOrigin.y === y;
+            const target = getTileFrom(s.tiles, x, y);
+
+            if (infectedSet.has(key) && !isOrigin && !(target && target.type === "tower")) {
+              if (!safe[key]) safe[key] = [];
+              if (!safe[key].includes(tile.owner)) safe[key].push(tile.owner);
+            }
+
+            x += dir.dx;
+            y += dir.dy;
+          }
+        });
+      });
+
+      s.infectionSafeZones = safe;
     }
 
     function getSafeIdsForKey(s, key) {
@@ -1853,7 +1898,8 @@ showRoom();
     function isSafeForPlayer(s, key, playerId) {
       const [x, y] = key.split(",").map(Number);
       const tile = getTileFrom(s.tiles, x, y);
-      return tile !== null && tile.type === "tower" && tile.owner === playerId;
+      if (tile && tile.type === "tower" && tile.owner === playerId) return true;
+      return getSafeIdsForKey(s, key).includes(playerId);
     }
 
     function getPlayerInitialById(s, id) {
