@@ -132,6 +132,11 @@
       padding-right: 36px;
     }
 
+    select option {
+      background: #ffffff;
+      color: #1a0820;
+    }
+
     /* ── Buttons ── */
     button {
       cursor: pointer;
@@ -744,7 +749,10 @@
         <div class="lobby-label">Room Code</div>
         <div class="room-code" id="roomCodeDisplay"></div>
         <div class="small" id="lobbyPlayers"></div>
-        <button id="startRoomBtn" onclick="startRoomGame()" style="margin-top:10px;">Start Game</button>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
+          <button id="startRoomBtn" onclick="startRoomGame()">Start Game</button>
+          <button class="secondary" onclick="leaveRoom()">Leave Room</button>
+        </div>
       </div>
     </section>
 
@@ -851,6 +859,7 @@
     window.updateMyLobbyColor = updateMyLobbyColor;
     window.updateGameTypeOptions = updateGameTypeOptions;
     window.selectGameType = selectGameType;
+    window.leaveRoom = leaveRoom;
 
     updateGameTypeOptions();
 
@@ -1065,6 +1074,41 @@ showRoom();
       roomId = null;
       state = null;
       await signOut(auth);
+    }
+
+    async function leaveRoom() {
+      if (!roomId || !currentUser) return;
+
+      const ref = doc(db, "games", roomId);
+      try {
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(ref);
+          if (!snap.exists()) return;
+          const data = snap.data();
+          if (data.status !== "lobby") return;
+
+          const remaining = (data.players || [])
+            .filter(p => p.uid !== currentUser.uid)
+            .map((p, i) => ({ ...p, id: i }));
+
+          if (remaining.length === 0) {
+            tx.delete(ref);
+          } else {
+            tx.update(ref, {
+              players: remaining,
+              hostUid: data.hostUid === currentUser.uid ? remaining[0].uid : data.hostUid,
+              updatedAt: serverTimestamp()
+            });
+          }
+        });
+      } catch (_) {}
+
+      if (unsubRoom) unsubRoom();
+      unsubRoom = null;
+      roomId = null;
+      state = null;
+      document.getElementById("roomCard").classList.remove("in-lobby");
+      showRoom();
     }
 
     function setAuthMessage(text) {
