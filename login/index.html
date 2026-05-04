@@ -398,11 +398,13 @@
     }
 
     #lobbyBox { display: none; }
+    .leave-room-btn { display: none; }
 
-    /* In-lobby: hide the main menu, show lobby */
+    /* In-lobby: hide the main menu, show lobby and leave button */
     #roomCard.in-lobby .menu-grid,
     #roomCard.in-lobby .room-main-title { display: none; }
     #roomCard.in-lobby #lobbyBox { display: block; }
+    #roomCard.in-lobby .leave-room-btn { display: inline-block; }
 
     /* In-game: collapse room card to just the header */
     body.view-game #roomCard .menu-grid,
@@ -701,7 +703,10 @@
     <section id="roomCard">
       <div class="room-header">
         <span class="signed-label">Signed in as <b id="signedInAs"></b></span>
-        <button class="secondary" onclick="logout()" style="padding:7px 14px;font-size:14px;">Logout</button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="secondary leave-room-btn" onclick="leaveRoom()" style="padding:7px 14px;font-size:14px;">Leave Room</button>
+          <button class="secondary" onclick="logout()" style="padding:7px 14px;font-size:14px;">Logout</button>
+        </div>
       </div>
 
       <div class="room-main-title">&#127942; Main Menu</div>
@@ -749,10 +754,7 @@
         <div class="lobby-label">Room Code</div>
         <div class="room-code" id="roomCodeDisplay"></div>
         <div class="small" id="lobbyPlayers"></div>
-        <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
-          <button id="startRoomBtn" onclick="startRoomGame()">Start Game</button>
-          <button class="secondary" onclick="leaveRoom()">Leave Room</button>
-        </div>
+        <button id="startRoomBtn" onclick="startRoomGame()" style="margin-top:10px;">Start Game</button>
       </div>
     </section>
 
@@ -1607,19 +1609,7 @@ showRoom();
         }
 
         if ((state.infectedTiles || []).includes(key) && !(state.gasOrigin && state.gasOrigin.x === tile.x && state.gasOrigin.y === tile.y)) {
-          const safeIds = getSafeIdsForKey(state, key);
-
-          if (safeIds.length > 0) {
-            div.className += " safe-infected";
-            applySafeTileVisual(div, safeIds);
-
-            const safeLetter = document.createElement("div");
-            safeLetter.className = "safe-letter";
-            safeLetter.textContent = safeIds.map(id => getPlayerInitialById(state, id)).join("");
-            div.appendChild(safeLetter);
-          } else {
-            div.className += " infected";
-          }
+          div.className += " infected";
         }
 
         if (!isMyTurn() || state.status !== "playing") {
@@ -1852,39 +1842,7 @@ showRoom();
     }
 
     function rebuildInfectionSafeZones(s) {
-      const safe = {};
-      const infectedSet = new Set(s.infectedTiles || []);
-
-      (s.tiles || []).forEach(tile => {
-        if (tile.type !== "tower" || tile.owner === null || tile.owner === undefined) return;
-
-        const directions = [
-          { dx: 0, dy: -1 },
-          { dx: 0, dy: 1 },
-          { dx: -1, dy: 0 },
-          { dx: 1, dy: 0 }
-        ];
-
-        directions.forEach(dir => {
-          let x = tile.x + dir.dx;
-          let y = tile.y + dir.dy;
-
-          while (x >= 0 && y >= 0 && x < s.size && y < s.size) {
-            const key = tileKey(x, y);
-            const isOrigin = s.gasOrigin && s.gasOrigin.x === x && s.gasOrigin.y === y;
-
-            if (infectedSet.has(key) && !isOrigin) {
-              if (!safe[key]) safe[key] = [];
-              if (!safe[key].includes(tile.owner)) safe[key].push(tile.owner);
-            }
-
-            x += dir.dx;
-            y += dir.dy;
-          }
-        });
-      });
-
-      s.infectionSafeZones = safe;
+      s.infectionSafeZones = {};
     }
 
     function getSafeIdsForKey(s, key) {
@@ -1893,7 +1851,9 @@ showRoom();
     }
 
     function isSafeForPlayer(s, key, playerId) {
-      return getSafeIdsForKey(s, key).includes(playerId);
+      const [x, y] = key.split(",").map(Number);
+      const tile = getTileFrom(s.tiles, x, y);
+      return tile !== null && tile.type === "tower" && tile.owner === playerId;
     }
 
     function getPlayerInitialById(s, id) {
