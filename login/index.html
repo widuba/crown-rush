@@ -717,7 +717,8 @@
 
           <label for="roomPlayerCount">Players</label>
           <select id="roomPlayerCount" onchange="updateGameTypeOptions()">
-            <option value="2">2 Players</option>
+            <option value="1">1 Player (vs AI)</option>
+            <option value="2" selected>2 Players</option>
             <option value="3">3 Players</option>
             <option value="4">4 Players</option>
           </select>
@@ -848,6 +849,7 @@
     let unsubRoom = null;
     let state = null;
     let selectedGameType = "poison";
+    let aiMovePending = false;
 
     window.signUp = signUp;
     window.login = login;
@@ -868,7 +870,8 @@
     updateGameTypeOptions();
 
     function updateGameTypeOptions() {
-      const count = parseInt(document.getElementById("roomPlayerCount").value, 10);
+      const raw = parseInt(document.getElementById("roomPlayerCount").value, 10);
+      const count = raw === 1 ? 2 : raw;
       const box = document.getElementById("gameTypeOptions");
       if (!box) return;
 
@@ -912,7 +915,8 @@
     }
 
     function selectGameType(type) {
-      const count = parseInt(document.getElementById("roomPlayerCount").value, 10);
+      const raw = parseInt(document.getElementById("roomPlayerCount").value, 10);
+      const count = raw === 1 ? 2 : raw;
       if (type === "noname" && count === 4) return;
       selectedGameType = type;
       updateGameTypeOptions();
@@ -1110,12 +1114,13 @@ showRoom();
             .filter(p => p.uid !== currentUser.uid)
             .map((p, i) => ({ ...p, id: i }));
 
-          if (remaining.length === 0) {
+          const humanRemaining = remaining.filter(p => !p.isAI);
+          if (humanRemaining.length === 0) {
             tx.delete(ref);
           } else {
             tx.update(ref, {
               players: remaining,
-              hostUid: data.hostUid === currentUser.uid ? remaining[0].uid : data.hostUid,
+              hostUid: data.hostUid === currentUser.uid ? humanRemaining[0].uid : data.hostUid,
               updatedAt: serverTimestamp()
             });
           }
@@ -1166,7 +1171,8 @@ showRoom();
     async function createRoom() {
       if (!currentUser || !currentProfile) return;
 
-      const playerCount = parseInt(document.getElementById("roomPlayerCount").value, 10);
+      const rawCount = parseInt(document.getElementById("roomPlayerCount").value, 10);
+      const playerCount = rawCount === 1 ? 2 : rawCount;
       const color = document.getElementById("hostPlayerColor").value;
 
       let code = roomCode();
@@ -1193,6 +1199,21 @@ showRoom();
         infected: false,
         eliminated: false
       });
+
+      if (rawCount === 1) {
+        blank.players.push({
+          uid: "AI_PLAYER",
+          username: "CPU",
+          color: pickAvailableColor(blank.players, "#6366f1"),
+          id: 1,
+          x: null,
+          y: null,
+          points: 0,
+          infected: false,
+          eliminated: false,
+          isAI: true
+        });
+      }
 
       await setDoc(ref, blank);
       subscribeRoom(code);
@@ -1346,6 +1367,10 @@ showRoom();
         if (state.status === "playing" || state.status === "ended") {
           showGame();
           render();
+          if (state.status === "playing" && isAITurn() && currentUser?.uid === state.hostUid && !aiMovePending) {
+            aiMovePending = true;
+            setTimeout(async () => { await executeAIMove(); aiMovePending = false; }, 850);
+          }
         } else {
           showRoom();
           renderLobby();
@@ -1706,6 +1731,125 @@ showRoom();
       if (!state || state.status !== "playing" || !currentUser) return false;
       const p = state.players[state.currentPlayer];
       return p && p.uid === currentUser.uid;
+    }
+
+    function isAITurn() {
+      if (!state || state.status !== "playing") return false;
+      const p = state.players[state.currentPlayer];
+      return p && p.isAI === true;
+    }
+
+    async function executeAIMove() {
+      if (!state || !isAITurn() || currentUser?.uid !== state.hostUid) return;
+
+      const next = clone(state);
+      const player = next.players[next.currentPlayer];
+
+      if (player.infected) {
+        teleportPlayer(next, player);
+        player.infected = false;
+        next.consecutiveStayTurns = 0;
+        if (!checkWinner(next, player)) advanceTurn(next);
+        await saveState(next);
+        return;
+      }
+
+      const action = chooseAIMove(next, player);
+
+      if (action === "stay") {
+        const tile = getTileFrom(next.tiles, player.x, player.y);
+        handleTowerStep(next, player, tile, false);
+        if (next.gasFinalized) rebuildInfectionSafeZones(next);
+        handleInfection(next, player);
+        next.consecutiveStayTurns++;
+        if (checkWinner(next, player)) { await saveState(next); return; }
+        if (next.consecutiveStayTurns >= next.players.length * 5) {
+          endGameInState(next, getRankingFor(next)[0], "Game ended — no movement for too long.");
+        } else {
+          advanceTurn(next);
+        }
+      } else {
+        const { x, y } = action;
+        player.x = x;
+        player.y = y;
+        const tile = getTileFrom(next.tiles, x, y);
+        if (!tile.revealed) {
+          tile.revealed = true;
+          player.points += 10;
+          if (next.twoPlayerMode && tile.type === "gas" && !next.gasActive) {
+            next.gasActive = true;
+            next.gasOrigin = { x, y };
+            next.infectedTiles.push(tileKey(x, y));
+          }
+        }
+        handleTowerStep(next, player, tile, true);
+        if (next.gasFinalized) rebuildInfectionSafeZones(next);
+        handleInfection(next, player);
+        next.consecutiveStayTurns = 0;
+        if (!checkWinner(next, player)) advanceTurn(next);
+      }
+
+      await saveState(next);
+    }
+
+    function chooseAIMove(s, player) {
+      const dirs = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }];
+      const candidates = [];
+
+      const curTile = getTileFrom(s.tiles, player.x, player.y);
+      let stayScore = 0;
+      if (curTile.type === "tower" && curTile.owner === player.id) {
+        if (curTile.invaderId !== null) stayScore = 70;
+        else if (curTile.level < 8 && !s.noNameMode) stayScore = 35 + curTile.level * 5;
+        else if (curTile.level < 8 && s.noNameMode) stayScore = 15 + curTile.level * 3;
+      }
+      candidates.push({ action: "stay", score: stayScore });
+
+      for (const { dx, dy } of dirs) {
+        const nx = player.x + dx;
+        const ny = player.y + dy;
+        if (nx < 0 || ny < 0 || nx >= s.size || ny >= s.size) continue;
+
+        const tile = getTileFrom(s.tiles, nx, ny);
+        const key = tileKey(nx, ny);
+        let score = 0;
+
+        if ((s.infectedTiles || []).includes(key)) {
+          if (!isSafeForPlayer(s, key, player.id)) score -= 300;
+          else score += 5;
+        }
+
+        if (!tile.revealed) score += 18;
+
+        if (tile.type === "tower") {
+          if (tile.owner === null) {
+            score += 130;
+          } else if (tile.owner !== player.id) {
+            score += s.noNameMode ? 210 : 55;
+          } else if (tile.invaderId !== null) {
+            score += 75;
+          }
+        }
+
+        candidates.push({ action: { x: nx, y: ny }, score });
+      }
+
+      const valuableTargets = s.tiles.filter(t =>
+        t.type === "tower" && (t.owner === null || t.owner !== player.id)
+      );
+      if (valuableTargets.length) {
+        const nearest = valuableTargets.reduce((best, t) =>
+          manhattan(t, player) < manhattan(best, player) ? t : best
+        , valuableTargets[0]);
+
+        for (const c of candidates) {
+          if (c.action === "stay") continue;
+          if (manhattan(c.action, nearest) < manhattan(player, nearest)) c.score += 12;
+        }
+      }
+
+      candidates.sort((a, b) => (b.score - a.score) + (Math.random() - 0.5) * 6);
+      return candidates[0].action;
     }
 
     async function moveTo(x, y) {
