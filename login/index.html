@@ -453,11 +453,11 @@
     }
 
     .score {
-      padding: 5px 11px;
+      padding: 7px 14px;
       border-radius: 999px;
       color: #fff;
       font-weight: 800;
-      font-size: clamp(10px, 2.3vw, 13px);
+      font-size: clamp(12px, 2.8vw, 15px);
       border: 2px solid rgba(255,255,255,.25);
       text-shadow: 0 1px 3px rgba(0,0,0,.5);
     }
@@ -1531,17 +1531,24 @@ showRoom();
 
     function placeTowersIn(s, starts) {
       let placed = 0;
+      let attempts = 0;
+      const minTowerDist = s.noNameMode ? 3 : 0;
 
-      while (placed < s.towerCount) {
+      while (placed < s.towerCount && attempts < 10000) {
+        attempts++;
         const x = Math.floor(Math.random() * s.size);
         const y = Math.floor(Math.random() * s.size);
         const tile = getTileFrom(s.tiles, x, y);
         const isStart = starts.some(p => p.x === x && p.y === y);
+        if (isStart || tile.type === "tower") continue;
 
-        if (!isStart && tile.type !== "tower") {
-          tile.type = "tower";
-          placed++;
+        if (minTowerDist > 0) {
+          const tooClose = s.tiles.some(t => t.type === "tower" && manhattan(t, { x, y }) < minTowerDist);
+          if (tooClose) continue;
         }
+
+        tile.type = "tower";
+        placed++;
       }
     }
 
@@ -1911,7 +1918,8 @@ showRoom();
               if (nx < 0 || ny < 0 || nx >= s.size || ny >= s.size) continue;
 
               const newKey = tileKey(nx, ny);
-              if (!s.infectedTiles.includes(newKey)) possible.push(newKey);
+              const newTile = getTileFrom(s.tiles, nx, ny);
+              if (!s.infectedTiles.includes(newKey) && !(newTile && newTile.type === "tower")) possible.push(newKey);
             }
           }
         });
