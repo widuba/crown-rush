@@ -1956,6 +1956,7 @@ showRoom();
             if (tile.ownerProgress >= tile.level) {
               tile.level++;
               tile.ownerProgress = 0;
+              player.points += pointsForTowerLevel(tile.level);
             }
           }
           return;
