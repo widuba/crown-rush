@@ -301,10 +301,29 @@
       backdrop-filter: blur(12px);
       flex-shrink: 0;
       flex-wrap: wrap;
+      position: relative;
     }
 
     .signed-label { font-size: 13px; color: var(--muted); font-weight: 700; }
     .signed-label b { color: var(--gold); font-size: 14px; }
+
+    .htp-link {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      font-size: 13px; font-weight: 800;
+      color: var(--purple-light, #a78bfa);
+      text-decoration: none;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(167,139,250,.3);
+      background: rgba(124,58,237,.12);
+      transition: background .15s, color .15s, border-color .15s;
+      white-space: nowrap;
+    }
+    .htp-link:hover {
+      background: rgba(124,58,237,.25);
+      color: #fff;
+      border-color: rgba(167,139,250,.6);
+    }
 
     .room-main-title {
       font-family: 'Fredoka One', cursive;
@@ -813,6 +832,7 @@
     <section id="roomCard">
       <div class="room-header">
         <span class="signed-label">Signed in as <b id="signedInAs"></b></span>
+        <a class="htp-link" href="/how-to-play" target="_blank">&#10067; How to Play</a>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <button class="secondary leave-room-btn" onclick="leaveRoom()" style="padding:7px 14px;font-size:14px;">Leave Room</button>
           <button class="secondary" onclick="logout()" style="padding:7px 14px;font-size:14px;">Logout</button>
