@@ -739,7 +739,9 @@
           <h3>&#128272; Join Game</h3>
 
           <label for="joinCode">Room Code</label>
-          <input id="joinCode" placeholder="Enter code">
+          <input id="joinCode" placeholder="Enter code"
+            oninput="this.value=this.value.toUpperCase()"
+            autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
 
           <label for="joinPlayerColor">Your Color</label>
           <div class="color-row">
