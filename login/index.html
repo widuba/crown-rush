@@ -849,7 +849,7 @@
     let unsubRoom = null;
     let state = null;
     let selectedGameType = "poison";
-    let aiMovePending = false;
+    let aiMoveTimer = null;
     let selectedDifficulty = "medium";
 
     window.signUp = signUp;
@@ -1395,9 +1395,17 @@ showRoom();
         if (state.status === "playing" || state.status === "ended") {
           showGame();
           render();
-          if (state.status === "playing" && isAITurn() && currentUser?.uid === state.hostUid && !aiMovePending) {
-            aiMovePending = true;
-            setTimeout(async () => { await executeAIMove(); aiMovePending = false; }, 850);
+          // Debounced AI trigger — clears any pending timer so rapid human clicks
+          // never leave the AI permanently stuck
+          if (state.status === "playing" && isAITurn() && currentUser?.uid === state.hostUid) {
+            clearTimeout(aiMoveTimer);
+            aiMoveTimer = setTimeout(async () => {
+              aiMoveTimer = null;
+              if (state?.status === "playing" && isAITurn()) await executeAIMove();
+            }, 850);
+          } else {
+            clearTimeout(aiMoveTimer);
+            aiMoveTimer = null;
           }
         } else {
           showRoom();
@@ -1946,16 +1954,11 @@ showRoom();
       let score = ai.points - opp.points;
 
       if (s.noNameMode) {
-        // Tower count drives the instant-win condition
         score += (aiT - oppT) * 300;
-        // Stockpiled tower value = potential future steal losses/gains
         score += (aiCV - oppCV) * 0.6;
-        // Closeness to win threshold
         score += ((s.towersToWin - oppT) - (s.towersToWin - aiT)) * 400;
-        // Elimination states
         if (opp.eliminated) score += 80000;
         if (ai.eliminated)  score -= 80000;
-        // Near-elimination warning
         if (opp.points < 150 && !opp.eliminated) score +=  1500;
         if (ai.points  < 150 && !ai.eliminated)  score -= 1500;
       } else {
@@ -1971,16 +1974,69 @@ showRoom();
         if (ai.infected)  score -=  300;
       }
 
+      // Positional reach advantage: who gets to each contested tower first?
+      for (const tile of s.tiles) {
+        if (tile.type !== "tower") continue;
+        const aiDist  = manhattan(ai,  tile);
+        const oppDist = manhattan(opp, tile);
+        if (tile.owner !== aiId) {
+          // Contested or enemy tower — AI reaching it first is good
+          const val = s.noNameMode
+            ? cumulativeTowerPoints(tile.level) * 0.35
+            : (tile.owner === null ? 35 : pointsForTowerLevel(tile.level) * 0.35);
+          if (aiDist  < oppDist) score += val;
+          else if (oppDist < aiDist) score -= val;
+        } else {
+          // Own tower — opponent adjacent is a threat
+          if (oppDist === 1) {
+            score -= s.noNameMode
+              ? cumulativeTowerPoints(tile.level) * 0.4
+              : pointsForTowerLevel(tile.level) * 0.4;
+          }
+        }
+      }
+
       return score;
     }
 
-    // Alpha-beta minimax
+    // Cheap per-move score used to order moves before alpha-beta search
+    function quickMoveScore(s, player, move) {
+      if (move === "stay") {
+        const t = getTileFrom(s.tiles, player.x, player.y);
+        if (!t || t.type !== "tower") return 0;
+        if (t.owner === player.id && t.invaderId !== null) return 9000;
+        if (!s.noNameMode && t.owner !== null && t.owner !== player.id) return 8000;
+        if (t.owner === player.id && t.level < 8) return 3000;
+        return 0;
+      }
+      const t = getTileFrom(s.tiles, move.x, move.y);
+      if (!t) return 0;
+      if (t.type === "tower") {
+        if (t.owner === null) return 7000;
+        if (t.owner !== player.id) return s.noNameMode
+          ? cumulativeTowerPoints(t.level) * 10
+          : pointsForTowerLevel(t.level) * 8;
+        if (t.invaderId !== null) return 6000;
+        return 500;
+      }
+      return t.revealed ? 0 : 200;
+    }
+
+    // Alpha-beta minimax with move ordering for aggressive pruning
     function minimaxSearch(s, depth, alpha, beta, aiId) {
       if (depth === 0 || s.status !== "playing") return evaluateState(s, aiId);
 
       const player = s.players[s.currentPlayer];
       const maximizing = player.id === aiId;
-      const moves = getAIMoves(s, player);
+      let moves = getAIMoves(s, player);
+
+      // Sort moves by quick heuristic so best moves are tried first —
+      // dramatically improves alpha-beta cut rate
+      if (moves.length > 1) {
+        moves = moves.slice().sort(
+          (a, b) => quickMoveScore(s, player, b) - quickMoveScore(s, player, a)
+        );
+      }
 
       if (maximizing) {
         let best = -Infinity;
@@ -2029,8 +2085,8 @@ showRoom();
         }
       }
 
-      const maxDepth   = difficulty === "easy" ? 2 : difficulty === "medium" ? 4 : 10;
-      const timeLimit  = difficulty === "easy" ? 80 : difficulty === "medium" ? 250 : 700;
+      const maxDepth  = difficulty === "easy" ? 2 : difficulty === "medium" ? 4 : Infinity;
+      const timeLimit = difficulty === "easy" ? 80 : difficulty === "medium" ? 250 : 1400;
 
       const startTime = Date.now();
       let bestAction = moves[0];
