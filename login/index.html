@@ -1033,7 +1033,7 @@
 
       const nonameCard = count <= 3 ? `
         <div class="mode-card ${selectedGameType === "noname" ? "active" : ""}" onclick="selectGameType('noname')">
-          <strong>No Name</strong>
+          <strong>Not-So-Hidden Towers</strong>
           <span>${nonameDescs[count]}</span>
         </div>` : "";
 
@@ -1576,7 +1576,7 @@ showRoom();
 
       const hasAI = (state.players || []).some(p => p.isAI);
       const diffLabel = hasAI ? ` · CPU ${(state.aiDifficulty || "hard").charAt(0).toUpperCase() + (state.aiDifficulty || "hard").slice(1)}` : "";
-      const typeLabel = (state.gameType === "poison" ? "Poison Gas" : state.gameType === "noname" ? "No Name" : "Classic") + diffLabel;
+      const typeLabel = (state.gameType === "poison" ? "Poison Gas" : state.gameType === "noname" ? "Not-So-Hidden Towers" : "Classic") + diffLabel;
       document.getElementById("lobbyPlayers").innerHTML =
         `<strong style="color:var(--gold)">${typeLabel}</strong> &nbsp;|&nbsp; Players (${state.players.length}/${state.playerCount}): ${playerList}${colorEditor}`;
 
@@ -1797,7 +1797,7 @@ showRoom();
       const towerNote = state.useTowerWin ? ` or own ${state.towersToWin} towers` : "";
       if (state.noNameMode) {
         document.getElementById("gameNote").textContent =
-          `${state.playerCount}-player No Name: ${state.size}x${state.size}, ${state.towerCount} towers pre-revealed. Own ${state.towersToWin} towers or be last with points to win.`;
+          `${state.playerCount}-player Not-So-Hidden Towers: ${state.size}x${state.size}, ${state.towerCount} towers pre-revealed. Own ${state.towersToWin} towers or be last with points to win.`;
       } else if (state.twoPlayerMode) {
         document.getElementById("gameNote").textContent =
           `${state.playerCount}-player Poison Gas: ${state.size}x${state.size}, ${state.towerCount} towers, get ${state.pointsToWin} pts${towerNote} to win. Gas spreads after revealed.`;
