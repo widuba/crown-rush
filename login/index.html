@@ -1793,63 +1793,118 @@ showRoom();
     }
 
     function chooseAIMove(s, player) {
-      const dirs = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }];
-      const candidates = [];
-
+      const dirs = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
       const curTile = getTileFrom(s.tiles, player.x, player.y);
-      let stayScore = 0;
-      if (curTile.type === "tower" && curTile.owner === player.id) {
-        if (curTile.invaderId !== null) stayScore = 70;
-        else if (curTile.level < 8 && !s.noNameMode) stayScore = 35 + curTile.level * 5;
-        else if (curTile.level < 8 && s.noNameMode) stayScore = 15 + curTile.level * 3;
-      }
-      candidates.push({ action: "stay", score: stayScore });
 
-      for (const { dx, dy } of dirs) {
-        const nx = player.x + dx;
-        const ny = player.y + dy;
+      let bestScore = aiStayScore(s, player, curTile);
+      let bestAction = "stay";
+
+      // BFS over entire board; score each reachable tile weighted by distance
+      const visited = new Set([tileKey(player.x, player.y)]);
+      const queue = [];
+
+      for (const {dx, dy} of dirs) {
+        const nx = player.x + dx, ny = player.y + dy;
         if (nx < 0 || ny < 0 || nx >= s.size || ny >= s.size) continue;
+        const nk = tileKey(nx, ny);
+        visited.add(nk);
+        queue.push({x: nx, y: ny, dist: 1, firstStep: {x: nx, y: ny}});
+      }
 
-        const tile = getTileFrom(s.tiles, nx, ny);
-        const key = tileKey(nx, ny);
-        let score = 0;
+      while (queue.length) {
+        const {x, y, dist, firstStep} = queue.shift();
+        if (dist > 12) continue;
 
-        if ((s.infectedTiles || []).includes(key)) {
-          if (!isSafeForPlayer(s, key, player.id)) score -= 300;
-          else score += 5;
+        const tile = getTileFrom(s.tiles, x, y);
+        const key = tileKey(x, y);
+        const val = aiTileValue(s, player, tile, key);
+        const score = val / dist;
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestAction = firstStep;
         }
 
-        if (!tile.revealed) score += 18;
+        for (const {dx, dy} of dirs) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= s.size || ny >= s.size) continue;
+          const nk = tileKey(nx, ny);
+          if (visited.has(nk)) continue;
+          visited.add(nk);
+          queue.push({x: nx, y: ny, dist: dist + 1, firstStep});
+        }
+      }
 
-        if (tile.type === "tower") {
-          if (tile.owner === null) {
-            score += 130;
-          } else if (tile.owner !== player.id) {
-            score += s.noNameMode ? 210 : 55;
-          } else if (tile.invaderId !== null) {
-            score += 75;
+      // Never first-step into lethal gas
+      if (bestAction !== "stay") {
+        const fk = tileKey(bestAction.x, bestAction.y);
+        if ((s.infectedTiles || []).includes(fk) && !isSafeForPlayer(s, fk, player.id)) {
+          bestAction = "stay";
+        }
+      }
+
+      return bestAction;
+    }
+
+    function aiStayScore(s, player, tile) {
+      if (tile.type !== "tower") return 0;
+
+      if (tile.owner === player.id) {
+        // Reset an invader immediately — high priority
+        if (tile.invaderId !== null) {
+          const tv = s.noNameMode
+            ? cumulativeTowerPoints(tile.level)
+            : pointsForTowerLevel(tile.level);
+          return tv * 0.9;
+        }
+        // Upgrade: value = next-level points / stays remaining
+        if (tile.level < 8) {
+          const staysLeft = Math.max(1, tile.level - tile.ownerProgress);
+          return pointsForTowerLevel(tile.level + 1) / staysLeft;
+        }
+        return 0;
+      }
+
+      // On an enemy tower in classic/poison: keep invading
+      if (!s.noNameMode && tile.owner !== null) {
+        const done = tile.invaderId === player.id ? tile.invaderProgress : 0;
+        const left = Math.max(1, 5 - done);
+        return (pointsForTowerLevel(tile.level) * 0.7) / left;
+      }
+
+      return 0;
+    }
+
+    function aiTileValue(s, player, tile, key) {
+      // Lethal gas — never go here
+      if ((s.infectedTiles || []).includes(key) && !isSafeForPlayer(s, key, player.id)) {
+        return -9999;
+      }
+
+      if (tile.type === "tower") {
+        if (tile.owner === null) {
+          return s.noNameMode ? 80 : pointsForTowerLevel(1) + 60;
+        }
+        if (tile.owner !== player.id) {
+          if (s.noNameMode) {
+            return cumulativeTowerPoints(tile.level) * 2.0;
           }
+          return pointsForTowerLevel(tile.level) * 1.2;
         }
-
-        candidates.push({ action: { x: nx, y: ny }, score });
+        // Own tower with active invader — go defend
+        if (tile.invaderId !== null) {
+          const tv = s.noNameMode
+            ? cumulativeTowerPoints(tile.level)
+            : pointsForTowerLevel(tile.level);
+          return tv * 1.3;
+        }
+        // Own tower, no threat — slight value if upgradeable
+        if (tile.level < 8) return pointsForTowerLevel(tile.level + 1) * 0.15;
+        return 0;
       }
 
-      const valuableTargets = s.tiles.filter(t =>
-        t.type === "tower" && (t.owner === null || t.owner !== player.id)
-      );
-      if (valuableTargets.length) {
-        const nearest = valuableTargets.reduce((best, t) =>
-          manhattan(t, player) < manhattan(best, player) ? t : best
-        , valuableTargets[0]);
-
-        for (const c of candidates) {
-          if (c.action === "stay") continue;
-          if (manhattan(c.action, nearest) < manhattan(player, nearest)) c.score += 12;
-        }
-      }
-
-      candidates.sort((a, b) => (b.score - a.score) + (Math.random() - 0.5) * 6);
-      return candidates[0].action;
+      if (!tile.revealed) return 12;  // exploration
+      return -2;                       // already-seen empty tile
     }
 
     async function moveTo(x, y) {
