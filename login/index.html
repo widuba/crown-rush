@@ -1964,7 +1964,7 @@ showRoom();
         if (!justMovedOntoTile) return;
         const prevOwner = s.players.find(p => p.id === tile.owner);
         if (prevOwner) {
-          const stealAmt = Math.min(prevOwner.points, pointsForTowerLevel(tile.level));
+          const stealAmt = Math.min(prevOwner.points, cumulativeTowerPoints(tile.level));
           prevOwner.points -= stealAmt;
           player.points += stealAmt;
           if (prevOwner.points === 0) prevOwner.eliminated = true;
@@ -2328,6 +2328,12 @@ showRoom();
 
     function pointsForTowerLevel(level) {
       return Math.floor(50 * Math.pow(1.6, level - 1));
+    }
+
+    function cumulativeTowerPoints(level) {
+      let total = 0;
+      for (let i = 1; i <= level; i++) total += pointsForTowerLevel(i);
+      return total;
     }
 
     function countOwnedTowersIn(s, playerId) {
