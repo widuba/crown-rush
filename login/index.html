@@ -892,7 +892,7 @@
       };
       const nonameDescs = {
         2: "8x8 grid, 4 towers pre-revealed (2 each). Steal enemy towers on contact. Own all 4 or be last with points.",
-        3: "8x8 grid, 6 towers pre-revealed (2 each). Steal enemy towers on contact. Own all 6 or be last with points."
+        3: "8x8 grid, 6 towers pre-revealed (2 each). Steal enemy towers on contact. Own 4 of 6 or be last with points."
       };
 
       const nonameCard = count <= 3 ? `
@@ -1300,7 +1300,7 @@ showRoom();
       if (noNameMode) {
         size = 8;
         if (playerCount === 2) { towerCount = 4; towersToWin = 4; startingPoints = 2000; }
-        else                   { towerCount = 6; towersToWin = 6; startingPoints = 3000; }
+        else                   { towerCount = 6; towersToWin = 4; startingPoints = 3000; }
         pointsToWin = 999999;
         useTowerWin = true;
       } else if (playerCount === 2) {
