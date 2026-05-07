@@ -653,6 +653,61 @@
       .menu-grid { grid-template-columns: 1fr; }
     }
 
+    /* ════════════════════════════
+       GAME SIDEBAR (base)
+    ════════════════════════════ */
+    .game-sidebar {
+      display: flex; flex-direction: column;
+      gap: 6px; width: 100%; flex-shrink: 0;
+    }
+
+    /* ════════════════════════════
+       DESKTOP TWO-COLUMN LAYOUT
+    ════════════════════════════ */
+    @media (min-width: 700px) {
+      body.view-game #gameArea {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 14px;
+        max-width: 1100px;
+      }
+
+      body.view-game .board-wrap {
+        flex: 1; min-width: 0;
+        align-self: flex-start;
+        justify-content: flex-start;
+      }
+
+      body.view-game .board {
+        width: min(calc(100dvh - 110px), calc(100vh - 110px), 100%);
+      }
+
+      body.view-game .game-sidebar {
+        flex: 0 0 260px;
+        width: 260px;
+        min-width: 0;
+      }
+
+      body.view-game .info {
+        font-size: clamp(12px, 1.6vw, 16px);
+      }
+
+      body.view-game .scores {
+        flex-direction: column;
+        gap: 5px;
+        justify-content: flex-start;
+      }
+
+      body.view-game .score {
+        width: 100%;
+        border-radius: 12px;
+        font-size: 13px;
+        white-space: normal;
+        word-break: break-word;
+        box-sizing: border-box;
+      }
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -763,22 +818,24 @@
 
     <!-- ══ GAME AREA ══ -->
     <section id="gameArea">
-      <div class="game-top-bar">
-        <div class="info" id="info">Waiting...</div>
-        <button class="stay-btn" onclick="stayTurn()">Stay</button>
-      </div>
-
-      <div class="scores" id="scores"></div>
-
       <div class="board-wrap">
         <div class="board" id="board"></div>
       </div>
 
-      <div class="note" id="gameNote">
-        Online mode. Arrow keys move. S stays.
-      </div>
+      <div class="game-sidebar">
+        <div class="game-top-bar">
+          <div class="info" id="info">Waiting...</div>
+          <button class="stay-btn" onclick="stayTurn()">Stay</button>
+        </div>
 
-      <button id="backToRoomBtn" onclick="backToRoom()" style="display:none;margin-top:4px;">Back to Room</button>
+        <div class="scores" id="scores"></div>
+
+        <div class="note" id="gameNote">
+          Online mode. Arrow keys move. S stays.
+        </div>
+
+        <button id="backToRoomBtn" onclick="backToRoom()" style="display:none;margin-top:4px;">Back to Room</button>
+      </div>
 
       <button class="reset-bottom danger" onclick="confirmResetRoom()">Reset Room</button>
     </section>
