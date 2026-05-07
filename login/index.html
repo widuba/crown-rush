@@ -708,6 +708,53 @@
       }
     }
 
+    body.view-loading .app { visibility: hidden; }
+
+    /* ════════════════════════════
+       LOADING SCREEN
+    ════════════════════════════ */
+    #loadingScreen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #0a0718;
+      background-image: radial-gradient(ellipse 80% 55% at 50% -5%, rgba(124,58,237,.28) 0%, transparent 70%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 28px;
+      transition: opacity .35s ease, visibility .35s ease;
+    }
+
+    #loadingScreen.hidden {
+      opacity: 0; visibility: hidden; pointer-events: none;
+    }
+
+    .loading-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(32px, 7vw, 52px);
+      background: linear-gradient(135deg, #fbbf24, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+    }
+
+    .loading-sub {
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px; font-weight: 700;
+      color: rgba(255,255,255,.38);
+      margin-top: -18px;
+      letter-spacing: .04em;
+    }
+
+    .loading-spinner {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      border: 3.5px solid rgba(124,58,237,.18);
+      border-top-color: #a78bfa;
+      border-right-color: #7c3aed;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -715,7 +762,15 @@
   </style>
 </head>
 
-<body class="view-auth">
+<body class="view-loading">
+
+  <!-- ══ LOADING SCREEN ══ -->
+  <div id="loadingScreen">
+    <div class="loading-title">&#127984; Hidden Towers</div>
+    <div class="loading-sub">Multiplayer Adventure</div>
+    <div class="loading-spinner"></div>
+  </div>
+
   <div class="app">
 
     <!-- ══ AUTH CARD ══ -->
@@ -1008,12 +1063,18 @@
       updateGameTypeOptions();
     }
 
+    function hideLoading() {
+      const el = document.getElementById("loadingScreen");
+      if (el) el.classList.add("hidden");
+    }
+
     onAuthStateChanged(auth, async (user) => {
   currentUser = user;
 
   if (!user) {
     currentProfile = null;
     showAuth();
+    hideLoading();
     return;
   }
 
@@ -1022,12 +1083,14 @@
   if (!profileSnap.exists()) {
     currentProfile = null;
     document.getElementById("signedInAs").textContent = "Setting up account...";
+    hideLoading();
     return;
   }
 
   currentProfile = profileSnap.data();
   document.getElementById("signedInAs").textContent = currentProfile.username;
   showRoom();
+  hideLoading();
 });
 
     function usernameKey(name) {
