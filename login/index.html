@@ -653,6 +653,108 @@
       .menu-grid { grid-template-columns: 1fr; }
     }
 
+    /* ════════════════════════════
+       GAME SIDEBAR (base)
+    ════════════════════════════ */
+    .game-sidebar {
+      display: flex; flex-direction: column;
+      gap: 6px; width: 100%; flex-shrink: 0;
+    }
+
+    /* ════════════════════════════
+       DESKTOP TWO-COLUMN LAYOUT
+    ════════════════════════════ */
+    @media (min-width: 700px) {
+      body.view-game #gameArea {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 14px;
+        max-width: 1100px;
+      }
+
+      body.view-game .board-wrap {
+        flex: 1; min-width: 0;
+        align-self: flex-start;
+        justify-content: flex-start;
+      }
+
+      body.view-game .board {
+        width: min(calc(100dvh - 110px), calc(100vh - 110px), 100%);
+      }
+
+      body.view-game .game-sidebar {
+        flex: 0 0 260px;
+        width: 260px;
+        min-width: 0;
+      }
+
+      body.view-game .info {
+        font-size: clamp(12px, 1.6vw, 16px);
+      }
+
+      body.view-game .scores {
+        flex-direction: column;
+        gap: 5px;
+        justify-content: flex-start;
+      }
+
+      body.view-game .score {
+        width: 100%;
+        border-radius: 12px;
+        font-size: 13px;
+        white-space: normal;
+        word-break: break-word;
+        box-sizing: border-box;
+      }
+    }
+
+    body.view-loading .app { visibility: hidden; }
+
+    /* ════════════════════════════
+       LOADING SCREEN
+    ════════════════════════════ */
+    #loadingScreen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #0a0718;
+      background-image: radial-gradient(ellipse 80% 55% at 50% -5%, rgba(124,58,237,.28) 0%, transparent 70%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 28px;
+      transition: opacity .35s ease, visibility .35s ease;
+    }
+
+    #loadingScreen.hidden {
+      opacity: 0; visibility: hidden; pointer-events: none;
+    }
+
+    .loading-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(32px, 7vw, 52px);
+      background: linear-gradient(135deg, #fbbf24, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+    }
+
+    .loading-sub {
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px; font-weight: 700;
+      color: rgba(255,255,255,.38);
+      margin-top: -18px;
+      letter-spacing: .04em;
+    }
+
+    .loading-spinner {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      border: 3.5px solid rgba(124,58,237,.18);
+      border-top-color: #a78bfa;
+      border-right-color: #7c3aed;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -660,7 +762,15 @@
   </style>
 </head>
 
-<body class="view-auth">
+<body class="view-loading">
+
+  <!-- ══ LOADING SCREEN ══ -->
+  <div id="loadingScreen">
+    <div class="loading-title">&#127984; Hidden Towers</div>
+    <div class="loading-sub">Multiplayer Adventure</div>
+    <div class="loading-spinner"></div>
+  </div>
+
   <div class="app">
 
     <!-- ══ AUTH CARD ══ -->
@@ -740,7 +850,6 @@
 
           <label for="joinCode">Room Code</label>
           <input id="joinCode" placeholder="Enter code"
-            maxlength="5"
             oninput="this.value=this.value.toUpperCase()"
             autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
 
@@ -764,22 +873,24 @@
 
     <!-- ══ GAME AREA ══ -->
     <section id="gameArea">
-      <div class="game-top-bar">
-        <div class="info" id="info">Waiting...</div>
-        <button class="stay-btn" onclick="stayTurn()">Stay</button>
-      </div>
-
-      <div class="scores" id="scores"></div>
-
       <div class="board-wrap">
         <div class="board" id="board"></div>
       </div>
 
-      <div class="note" id="gameNote">
-        Online mode. Arrow keys move. S stays.
-      </div>
+      <div class="game-sidebar">
+        <div class="game-top-bar">
+          <div class="info" id="info">Waiting...</div>
+          <button class="stay-btn" onclick="stayTurn()">Stay</button>
+        </div>
 
-      <button id="backToRoomBtn" onclick="backToRoom()" style="display:none;margin-top:4px;">Back to Room</button>
+        <div class="scores" id="scores"></div>
+
+        <div class="note" id="gameNote">
+          Online mode. Arrow keys move. S stays.
+        </div>
+
+        <button id="backToRoomBtn" onclick="backToRoom()" style="display:none;margin-top:4px;">Back to Room</button>
+      </div>
 
       <button class="reset-bottom danger" onclick="confirmResetRoom()">Reset Room</button>
     </section>
@@ -886,14 +997,14 @@
       }
 
       const classicDescs = {
-        2: "6x6 grid, 4 towers, win by getting 3000 points.",
-        3: "7x7 grid, 6 towers, win by getting 4000 pts or 4 towers.",
-        4: "8x8 grid, 7 towers, win by getting 5000 pts or 4 towers."
+        2: "6x6 grid, 4 towers, win by 3000 points.",
+        3: "7x7 grid, 6 towers, win by 4000 pts or 4 towers.",
+        4: "8x8 grid, 7 towers, win by 5000 pts or 4 towers."
       };
       const poisonDescs = {
-        2: "6x6 grid, 4 towers, poison gas, win by getting 2000 pts.",
-        3: "7x7 grid, 6 towers, poison gas, win by getting 3000 pts or 4 towers.",
-        4: "8x8 grid, 7 towers, poison gas, win by getting 4000 pts or 4 towers."
+        2: "6x6 grid, 4 towers, poison gas, win by 2000 pts.",
+        3: "7x7 grid, 6 towers, poison gas, win by 3000 pts or 4 towers.",
+        4: "8x8 grid, 7 towers, poison gas, win by 4000 pts or 4 towers."
       };
       const nonameDescs = {
         2: "8x8 grid, 4 towers pre-revealed (2 each). Steal enemy towers on contact. Own all 4 or be last with points.",
@@ -952,12 +1063,18 @@
       updateGameTypeOptions();
     }
 
+    function hideLoading() {
+      const el = document.getElementById("loadingScreen");
+      if (el) el.classList.add("hidden");
+    }
+
     onAuthStateChanged(auth, async (user) => {
   currentUser = user;
 
   if (!user) {
     currentProfile = null;
     showAuth();
+    hideLoading();
     return;
   }
 
@@ -966,12 +1083,14 @@
   if (!profileSnap.exists()) {
     currentProfile = null;
     document.getElementById("signedInAs").textContent = "Setting up account...";
+    hideLoading();
     return;
   }
 
   currentProfile = profileSnap.data();
   document.getElementById("signedInAs").textContent = currentProfile.username;
   showRoom();
+  hideLoading();
 });
 
     function usernameKey(name) {
