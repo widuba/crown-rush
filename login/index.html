@@ -1964,7 +1964,9 @@ showRoom();
         if (!justMovedOntoTile) return;
         const prevOwner = s.players.find(p => p.id === tile.owner);
         if (prevOwner) {
-          prevOwner.points = Math.max(0, prevOwner.points - 100);
+          const stealAmt = Math.min(prevOwner.points, pointsForTowerLevel(tile.level));
+          prevOwner.points -= stealAmt;
+          player.points += stealAmt;
           if (prevOwner.points === 0) prevOwner.eliminated = true;
         }
         tile.owner = player.id;
