@@ -850,6 +850,7 @@
     let state = null;
     let selectedGameType = "poison";
     let aiMovePending = false;
+    let selectedDifficulty = "medium";
 
     window.signUp = signUp;
     window.login = login;
@@ -865,6 +866,7 @@
     window.updateMyLobbyColor = updateMyLobbyColor;
     window.updateGameTypeOptions = updateGameTypeOptions;
     window.selectGameType = selectGameType;
+    window.selectDifficulty = selectDifficulty;
     window.leaveRoom = leaveRoom;
 
     updateGameTypeOptions();
@@ -901,6 +903,25 @@
           <span>${nonameDescs[count]}</span>
         </div>` : "";
 
+      const difficultySection = raw === 1 ? `
+        <div style="margin-top:8px">
+          <label class="menu-box" style="display:block;font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;padding:0;background:none;border:none;">AI Difficulty</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+            <div class="mode-card ${selectedDifficulty === "easy" ? "active" : ""}" onclick="selectDifficulty('easy')" style="text-align:center">
+              <strong>Easy</strong>
+              <span>Makes mistakes, forgiving</span>
+            </div>
+            <div class="mode-card ${selectedDifficulty === "medium" ? "active" : ""}" onclick="selectDifficulty('medium')" style="text-align:center">
+              <strong>Medium</strong>
+              <span>Solid play, beatable</span>
+            </div>
+            <div class="mode-card ${selectedDifficulty === "hard" ? "active" : ""}" onclick="selectDifficulty('hard')" style="text-align:center">
+              <strong>Hard</strong>
+              <span>Near-optimal. Good luck.</span>
+            </div>
+          </div>
+        </div>` : "";
+
       box.innerHTML = `
         <div class="mode-card ${selectedGameType === "classic" ? "active" : ""}" onclick="selectGameType('classic')">
           <strong>Classic</strong>
@@ -911,6 +932,7 @@
           <span>${poisonDescs[count]}</span>
         </div>
         ${nonameCard}
+        ${difficultySection}
       `;
     }
 
@@ -919,6 +941,11 @@
       const count = raw === 1 ? 2 : raw;
       if (type === "noname" && count === 4) return;
       selectedGameType = type;
+      updateGameTypeOptions();
+    }
+
+    function selectDifficulty(level) {
+      selectedDifficulty = level;
       updateGameTypeOptions();
     }
 
@@ -1201,6 +1228,7 @@ showRoom();
       });
 
       if (rawCount === 1) {
+        blank.aiDifficulty = selectedDifficulty;
         blank.players.push({
           uid: "AI_PLAYER",
           username: "CPU",
@@ -1396,7 +1424,9 @@ showRoom();
            </div>`
         : "";
 
-      const typeLabel = state.gameType === "poison" ? "Poison Gas" : state.gameType === "noname" ? "No Name" : "Classic";
+      const hasAI = (state.players || []).some(p => p.isAI);
+      const diffLabel = hasAI ? ` · CPU ${(state.aiDifficulty || "hard").charAt(0).toUpperCase() + (state.aiDifficulty || "hard").slice(1)}` : "";
+      const typeLabel = (state.gameType === "poison" ? "Poison Gas" : state.gameType === "noname" ? "No Name" : "Classic") + diffLabel;
       document.getElementById("lobbyPlayers").innerHTML =
         `<strong style="color:var(--gold)">${typeLabel}</strong> &nbsp;|&nbsp; Players (${state.players.length}/${state.playerCount}): ${playerList}${colorEditor}`;
 
@@ -1984,11 +2014,28 @@ showRoom();
       if (moves.length === 0) return "stay";
       if (moves.length === 1) return moves[0];
 
+      const difficulty = s.aiDifficulty || "hard";
+
+      // Easy: shallow search + deliberate blunders
+      if (difficulty === "easy") {
+        if (Math.random() < 0.40) {
+          // Pick a random move, biased toward non-terrible options
+          const nonEmpty = moves.filter(m => m === "stay" || (() => {
+            const t = getTileFrom(s.tiles, m.x, m.y);
+            return t && (t.type === "tower" || !t.revealed);
+          })());
+          const pool = nonEmpty.length ? nonEmpty : moves;
+          return pool[Math.floor(Math.random() * pool.length)];
+        }
+      }
+
+      const maxDepth   = difficulty === "easy" ? 2 : difficulty === "medium" ? 4 : 10;
+      const timeLimit  = difficulty === "easy" ? 80 : difficulty === "medium" ? 250 : 700;
+
       const startTime = Date.now();
-      const timeLimit = 700; // ms — leaves headroom for Firebase write
       let bestAction = moves[0];
 
-      for (let depth = 2; depth <= 10; depth++) {
+      for (let depth = 2; depth <= maxDepth; depth++) {
         if (Date.now() - startTime >= timeLimit) break;
 
         let depthBest = -Infinity;
