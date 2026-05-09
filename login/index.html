@@ -3360,7 +3360,7 @@ showRoom();
     //   TOURNAMENT SYSTEM
     // ═══════════════════════════════════════════════════════
 
-    const PHASE_LABELS = ["", "Round 1: vs AI", "Round 2: 1v1", "Rounds 3 & 4: 3-Player", "Round 5: 4-Player", "Round 6: Finals"];
+    const PHASE_LABELS = ["", "Round 1: vs AI", "Round 2: 1v1", "Round 3: 3-Player", "Round 4: 4-Player", "Round 5: Finals"];
 
     function generateTournamentCode() {
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -3628,7 +3628,7 @@ showRoom();
       // Phase bar
       const pb = document.getElementById("tPhaseBar");
       pb.innerHTML = "";
-      const phaseDisplayLabels = ["1", "2", "3&4", "5", "6"];
+      const phaseDisplayLabels = ["1", "2", "3", "4", "5"];
       [1,2,3,4,5].forEach((ph, i) => {
         const done = (tournament.phasesComplete || []).includes(ph);
         const active = tournament.currentPhase === ph;
@@ -3642,7 +3642,7 @@ showRoom();
       const rankings = getTournamentRankings(tournament.players || []);
       const cardsEl = document.getElementById("tPlayerCards");
       cardsEl.innerHTML = "";
-      const phaseLabelsShort = ["", "R1", "R2", "R3/4", "R5", "R6"];
+      const phaseLabelsShort = ["", "R1", "R2", "R3", "R4", "R5"];
       rankings.forEach((p, idx) => {
         const avg = p.ratings.length
           ? (p.ratings.reduce((s,r)=>s+r,0)/p.ratings.length).toFixed(1) : "—";
