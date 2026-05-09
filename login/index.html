@@ -39,6 +39,10 @@
       overflow: hidden;
     }
 
+    body.view-room, body.view-tournament, body.view-auth {
+      overflow-y: auto;
+    }
+
     body {
       font-family: 'Nunito', sans-serif;
       background: var(--bg);
@@ -69,18 +73,22 @@
     .app {
       position: relative;
       z-index: 1;
-      height: 100dvh;
-      height: 100vh;
+      min-height: 100dvh;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 10px;
       gap: 8px;
-      overflow: hidden;
     }
 
-    body.view-game .app { justify-content: flex-start; }
+    body.view-game .app {
+      height: 100dvh;
+      height: 100vh;
+      overflow: hidden;
+      justify-content: flex-start;
+    }
 
     /* ── Typography ── */
     h1, h2, h3, .ftitle { font-family: 'Fredoka One', cursive; font-weight: 400; }
