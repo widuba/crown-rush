@@ -316,12 +316,9 @@
     .signed-label b { color: var(--gold); font-size: 14px; }
     .player-id-badge {
       font-family: 'Fredoka One', cursive;
-      font-size: 11px; letter-spacing: .08em;
-      color: var(--muted);
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.1);
-      padding: 1px 7px; border-radius: 999px;
-      vertical-align: middle; margin-left: 5px;
+      font-size: 14px; letter-spacing: .08em;
+      color: var(--gold);
+      vertical-align: middle; margin-left: 6px;
     }
 
     .htp-link {
@@ -3501,7 +3498,7 @@ showRoom();
     }
 
     function openPlayerPass(p) {
-      const base = window.location.origin + "/pass/";
+      const base = window.location.origin + "/login/pass/";
       const url = `${base}?code=${encodeURIComponent(tournament.code)}&pid=${encodeURIComponent(p.playerId || "")}&name=${encodeURIComponent(p.username)}`;
       window.open(url, "_blank");
     }
