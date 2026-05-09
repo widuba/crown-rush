@@ -3501,7 +3501,7 @@ showRoom();
     }
 
     function openPlayerPass(p) {
-      const base = window.location.origin + "/login/pass/";
+      const base = window.location.origin + "/pass/";
       const url = `${base}?code=${encodeURIComponent(tournament.code)}&pid=${encodeURIComponent(p.playerId || "")}&name=${encodeURIComponent(p.username)}`;
       window.open(url, "_blank");
     }
