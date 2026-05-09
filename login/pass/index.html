@@ -13,310 +13,186 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --purple:  #7c3aed;
-      --purple2: #6d28d9;
-      --gold:    #f59e0b;
-      --text:    #e2e8f0;
-      --muted:   #94a3b8;
-      --card:    rgba(255,255,255,.06);
-      --border:  rgba(255,255,255,.12);
+      --purple: #7c3aed;
+      --gold:   #f59e0b;
+      --text:   #e2e8f0;
+      --muted:  #94a3b8;
+      --border: rgba(255,255,255,.12);
     }
 
     body {
       font-family: 'Nunito', sans-serif;
       background: #0a0718;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       align-items: center;
-      padding: 32px 16px;
-      gap: 20px;
+      padding: 32px 16px; gap: 20px;
       color: var(--text);
     }
 
-    /* ── Top controls (hidden in print) ── */
-    .controls {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
+    /* ── Lookup box (hidden in print) ── */
+    .lookup-box {
+      width: 420px; max-width: 100%;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 12px;
     }
 
+    .lookup-row { display: flex; flex-direction: column; gap: 4px; }
+
+    .lookup-label {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .lookup-input {
+      font-family: 'Fredoka One', cursive;
+      font-size: 20px; letter-spacing: .12em;
+      background: rgba(0,0,0,.35);
+      border: 2px solid var(--border); border-radius: 10px;
+      color: var(--text); padding: 10px 14px;
+      outline: none; text-transform: uppercase; width: 100%;
+      transition: border-color .15s;
+    }
+    .lookup-input:focus { border-color: var(--purple); }
+    .lookup-input::placeholder { color: rgba(255,255,255,.2); font-size: 16px; }
+
+    #lookupStatus { font-size: 13px; font-weight: 800; min-height: 18px; color: var(--muted); }
+
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
     .btn {
-      font-family: 'Nunito', sans-serif;
-      font-weight: 800;
-      font-size: 15px;
-      padding: 10px 22px;
-      border-radius: 999px;
-      border: none;
-      cursor: pointer;
-      transition: opacity .15s;
+      font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px;
+      padding: 10px 22px; border-radius: 999px; border: none;
+      cursor: pointer; transition: opacity .15s;
     }
     .btn:hover { opacity: .85; }
     .btn-primary { background: var(--purple); color: #fff; }
-    .btn-secondary { background: rgba(255,255,255,.1); color: var(--text); border: 1px solid var(--border); }
 
-    .hint {
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 700;
-      text-align: center;
-      max-width: 480px;
-    }
+    .hint { font-size: 13px; color: var(--muted); font-weight: 700; text-align: center; max-width: 420px; }
 
     /* ── Pass card ── */
     .pass {
-      width: 420px;
-      max-width: 100%;
+      width: 420px; max-width: 100%;
       background: linear-gradient(145deg, #13093a 0%, #1a0f4a 60%, #0e1a3a 100%);
       border: 1.5px solid rgba(167,139,250,.35);
-      border-radius: 20px;
-      overflow: hidden;
+      border-radius: 20px; overflow: hidden;
       box-shadow: 0 0 0 1px rgba(167,139,250,.1), 0 20px 60px rgba(0,0,0,.6);
-      position: relative;
     }
 
-    /* Decorative top stripe */
-    .pass-stripe {
-      height: 8px;
-      background: linear-gradient(90deg, #7c3aed, #a78bfa, #f59e0b, #a78bfa, #7c3aed);
-    }
+    .pass-stripe { height: 8px; background: linear-gradient(90deg, #7c3aed, #a78bfa, #f59e0b, #a78bfa, #7c3aed); }
 
-    /* Header */
     .pass-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 18px 22px 14px;
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 14px;
+      padding: 18px 22px 14px; border-bottom: 1px solid var(--border);
     }
 
-    .pass-logo {
-      font-family: 'Fredoka One', cursive;
-      font-size: 28px;
-      color: var(--gold);
-      line-height: 1;
-      flex-shrink: 0;
-    }
+    .pass-logo { font-family: 'Fredoka One', cursive; font-size: 28px; color: var(--gold); line-height: 1; flex-shrink: 0; }
+    .pass-title { font-family: 'Fredoka One', cursive; font-size: 18px; color: var(--text); }
+    .pass-subtitle { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
+    .pass-tournament-code { font-family: 'Fredoka One', cursive; font-size: 15px; color: var(--gold); letter-spacing: .1em; text-align: right; }
+    .pass-tournament-label { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; text-align: right; }
 
-    .pass-title-block { flex: 1; }
+    .pass-body { display: flex; }
 
-    .pass-title {
-      font-family: 'Fredoka One', cursive;
-      font-size: 18px;
-      color: var(--text);
-      letter-spacing: .03em;
-    }
-
-    .pass-subtitle {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--muted);
-      letter-spacing: .1em;
-      text-transform: uppercase;
-    }
-
-    .pass-tournament-code {
-      font-family: 'Fredoka One', cursive;
-      font-size: 15px;
-      color: var(--gold);
-      letter-spacing: .1em;
-      flex-shrink: 0;
-      text-align: right;
-    }
-    .pass-tournament-label {
-      font-size: 10px;
-      font-weight: 800;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      text-align: right;
-    }
-
-    /* Body */
-    .pass-body {
-      display: flex;
-      gap: 0;
-    }
-
-    /* Left column: fields */
-    .pass-fields {
-      flex: 1;
-      padding: 18px 20px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
+    .pass-fields { flex: 1; padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
 
     .pass-field { display: flex; flex-direction: column; gap: 3px; }
+    .pass-field-label { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+    .pass-field-value { font-size: 16px; font-weight: 800; color: var(--text); min-height: 26px; }
 
-    .pass-field-label {
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .pass-field-value {
-      font-size: 16px;
-      font-weight: 800;
-      color: var(--text);
-      min-height: 26px;
+    .pass-field-value.editable {
       border-bottom: 1.5px solid rgba(167,139,250,.25);
-      padding-bottom: 2px;
-      outline: none;
-      background: transparent;
+      padding-bottom: 2px; outline: none; background: transparent;
       font-family: 'Nunito', sans-serif;
     }
-
-    [contenteditable="true"]:focus {
-      border-bottom-color: var(--purple);
-    }
-
-    [contenteditable="true"]::after {
-      content: " ✏";
-      font-size: 11px;
-      opacity: .45;
-    }
-    [contenteditable="true"]:focus::after { display: none; }
+    .pass-field-value.editable:focus { border-bottom-color: var(--purple); }
+    .pass-field-value.editable::after { content: " ✏"; font-size: 11px; opacity: .45; }
+    .pass-field-value.editable:focus::after { display: none; }
 
     .pass-field-value.id-value {
-      font-family: 'Fredoka One', cursive;
-      font-size: 22px;
-      color: var(--gold);
-      letter-spacing: .12em;
-      border-bottom: none;
+      font-family: 'Fredoka One', cursive; font-size: 22px;
+      color: var(--gold); letter-spacing: .12em;
     }
 
-    /* Right column: QR */
     .pass-qr-col {
       padding: 18px 20px 20px 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0;
     }
 
     .qr-wrap {
-      background: #fff;
-      border-radius: 10px;
-      padding: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: #fff; border-radius: 10px; padding: 8px;
+      display: flex; align-items: center; justify-content: center;
     }
 
     #qrCanvas { display: block; border-radius: 4px; }
+    .qr-label { font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; text-align: center; }
 
-    .qr-label {
-      font-size: 10px;
-      font-weight: 800;
-      color: var(--muted);
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      text-align: center;
-    }
+    .pass-footer { border-top: 1px solid var(--border); padding: 12px 22px; display: flex; flex-direction: column; gap: 4px; }
+    .pass-url-label { font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .pass-url { font-size: 12px; font-weight: 700; color: #a78bfa; word-break: break-all; }
 
-    /* Footer */
-    .pass-footer {
-      border-top: 1px solid var(--border);
-      padding: 12px 22px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
+    .pass-stripe-bottom { height: 5px; background: linear-gradient(90deg, #f59e0b, #a78bfa, #7c3aed, #a78bfa, #f59e0b); opacity: .6; }
 
-    .pass-url-label {
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .pass-url {
-      font-size: 12px;
-      font-weight: 700;
-      color: #a78bfa;
-      word-break: break-all;
-    }
-
-    /* Bottom stripe */
-    .pass-stripe-bottom {
-      height: 5px;
-      background: linear-gradient(90deg, #f59e0b, #a78bfa, #7c3aed, #a78bfa, #f59e0b);
-      opacity: .6;
-    }
-
-    /* ── Print styles ── */
+    /* ── Print ── */
     @media print {
-      body {
-        background: #fff;
-        padding: 0;
-        gap: 0;
-      }
-
-      .controls, .hint { display: none !important; }
-
+      body { background: #fff; padding: 0; gap: 0; }
+      .lookup-box, .controls, .hint { display: none !important; }
       .pass {
-        width: 100%;
-        max-width: 480px;
-        box-shadow: none;
-        border-color: #ccc;
-        background: #fff;
-        color: #000;
-        border-radius: 12px;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        width: 100%; max-width: 480px; box-shadow: none; border-color: #ccc;
+        background: #fff; color: #000; border-radius: 12px;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
       }
-
       .pass-stripe, .pass-stripe-bottom { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-
-      .pass-field-value {
-        color: #111;
-        border-bottom-color: #bbb;
-      }
-
+      .pass-field-value { color: #111; }
+      .pass-field-value.editable { border-bottom-color: #bbb; }
       .pass-field-value.id-value { color: #5b21b6; }
       .pass-tournament-code { color: #92400e; }
       .pass-logo { color: #92400e; }
       .pass-title { color: #111; }
-      .pass-subtitle { color: #666; }
+      .pass-subtitle, .pass-url-label, .qr-label, .pass-field-label, .pass-tournament-label { color: #666; }
       .pass-url { color: #5b21b6; }
-      .pass-url-label, .qr-label, .pass-field-label, .pass-tournament-label { color: #666; }
-
       .qr-wrap { background: #fff; border: 1px solid #ddd; }
-
-      [contenteditable="true"]::after { display: none; }
+      .pass-field-value.editable::after { display: none; }
     }
   </style>
 </head>
 <body>
 
-  <div class="controls">
-    <button class="btn btn-primary" onclick="window.print()">🖨 Print / Save as PDF</button>
-    <button class="btn btn-secondary" onclick="regenerateQR()">↺ Refresh QR</button>
+  <!-- Lookup controls -->
+  <div class="lookup-box">
+    <div class="lookup-row">
+      <div class="lookup-label">Tournament Code</div>
+      <input id="codeInput" class="lookup-input" placeholder="ABCDEFGH" maxlength="8" />
+    </div>
+    <div class="lookup-row">
+      <div class="lookup-label">Player ID</div>
+      <input id="pidInput" class="lookup-input" placeholder="Enter 8-char Player ID" maxlength="8" />
+    </div>
+    <div id="lookupStatus"></div>
   </div>
 
-  <p class="hint">
-    Edit the fields on the pass directly — click any editable line to type.<br>
-    When done, print and save as PDF, then send via your email.
-  </p>
+  <div class="controls">
+    <button class="btn btn-primary" onclick="window.print()">🖨 Print / Save as PDF</button>
+  </div>
 
-  <div class="pass" id="pass">
+  <p class="hint">Type the Player ID above — the name fills in automatically. Edit DOB and notes if needed, then print and send via your email.</p>
+
+  <!-- Pass card -->
+  <div class="pass">
     <div class="pass-stripe"></div>
 
     <div class="pass-header">
       <div class="pass-logo">👑</div>
-      <div class="pass-title-block">
+      <div style="flex:1">
         <div class="pass-title">Crown Rush</div>
         <div class="pass-subtitle">Tournament Player Pass</div>
       </div>
       <div>
         <div class="pass-tournament-label">Tournament Code</div>
-        <div class="pass-tournament-code" id="dispCode">—</div>
+        <div class="pass-tournament-code" id="fieldCode">—</div>
       </div>
     </div>
 
@@ -325,17 +201,17 @@
 
         <div class="pass-field">
           <div class="pass-field-label">Player Name</div>
-          <div class="pass-field-value" contenteditable="true" id="fieldName" spellcheck="false">Player Name</div>
+          <div class="pass-field-value" id="fieldName">—</div>
         </div>
 
         <div class="pass-field">
           <div class="pass-field-label">Date of Birth</div>
-          <div class="pass-field-value" contenteditable="true" id="fieldDOB" spellcheck="false">MM / DD / YYYY</div>
+          <div class="pass-field-value editable" contenteditable="true" spellcheck="false">MM / DD / YYYY</div>
         </div>
 
         <div class="pass-field">
           <div class="pass-field-label">Notes</div>
-          <div class="pass-field-value" contenteditable="true" id="fieldNotes" spellcheck="false"></div>
+          <div class="pass-field-value editable" contenteditable="true" spellcheck="false"></div>
         </div>
 
         <div class="pass-field">
@@ -347,7 +223,7 @@
 
       <div class="pass-qr-col">
         <div class="qr-wrap">
-          <canvas id="qrCanvas"></canvas>
+          <canvas id="qrCanvas" width="148" height="148"></canvas>
         </div>
         <div class="qr-label">Scan to join</div>
       </div>
@@ -361,31 +237,90 @@
     <div class="pass-stripe-bottom"></div>
   </div>
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const code   = (params.get("code") || "").toUpperCase();
-    const pid    = (params.get("pid")  || "").toUpperCase();
-    const name   = params.get("name")  || "";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    // Construct join URL using the same origin (works on any host)
-    const joinURL = `${window.location.origin}/login/?tjoin=${code}&pid=${pid}`;
+    const db = getFirestore(initializeApp({
+      apiKey: "AIzaSyDnLusbSL7Fa-aAceIm3vLE_yRa1R-VajE",
+      authDomain: "hidden-towers.firebaseapp.com",
+      projectId: "hidden-towers",
+      storageBucket: "hidden-towers.firebasestorage.app",
+      messagingSenderId: "93909210045",
+      appId: "1:93909210045:web:7335ea94fc4a196129f8d4"
+    }));
 
-    // Populate static fields
-    document.getElementById("dispCode").textContent  = code || "—";
-    document.getElementById("fieldPID").textContent  = pid  || "—";
-    document.getElementById("dispURL").textContent   = joinURL;
-    if (name) document.getElementById("fieldName").textContent = name;
+    const pidInput  = document.getElementById("pidInput");
+    const codeInput = document.getElementById("codeInput");
+    const status    = document.getElementById("lookupStatus");
 
-    function regenerateQR() {
+    function currentCode() {
+      return codeInput.value.toUpperCase().replace(/[^A-Z]/g, "");
+    }
+
+    function updateQR(code) {
+      if (!code) return;
+      const url = `${window.location.origin}/login/?tjoin=${code}`;
+      document.getElementById("dispURL").textContent = url;
       QRCode.toCanvas(
-        document.getElementById("qrCanvas"),
-        joinURL,
+        document.getElementById("qrCanvas"), url,
         { width: 148, margin: 1, color: { dark: "#000000", light: "#ffffff" } },
-        function(err) { if (err) console.error(err); }
+        err => { if (err) console.error(err); }
       );
     }
 
-    regenerateQR();
+    async function lookupPlayer(pid) {
+      status.textContent = "Looking up…";
+      status.style.color = "var(--muted)";
+      try {
+        const snap = await getDoc(doc(db, "playerIds", pid));
+        if (!snap.exists()) {
+          status.textContent = "Player ID not found.";
+          status.style.color = "#f87171";
+          document.getElementById("fieldName").textContent = "—";
+          document.getElementById("fieldPID").textContent  = "—";
+          return;
+        }
+        const { username } = snap.data();
+        document.getElementById("fieldName").textContent = username;
+        document.getElementById("fieldPID").textContent  = pid;
+        status.textContent = "✓ Player found";
+        status.style.color = "#6ee7b7";
+        const code = currentCode();
+        if (code.length === 8) updateQR(code);
+      } catch(e) {
+        status.textContent = "Lookup failed — check your connection.";
+        status.style.color = "#f87171";
+      }
+    }
+
+    // Input handlers
+    pidInput.addEventListener("input", () => {
+      pidInput.value = pidInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+      if (pidInput.value.length === 8) lookupPlayer(pidInput.value);
+    });
+
+    codeInput.addEventListener("input", () => {
+      codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 8);
+      const code = codeInput.value;
+      document.getElementById("fieldCode").textContent = code || "—";
+      const pid = document.getElementById("fieldPID").textContent.trim();
+      if (code.length === 8 && pid && pid !== "—") updateQR(code);
+    });
+
+    // Pre-fill from URL params when opened via lobby "Pass" button
+    const params  = new URLSearchParams(window.location.search);
+    const preCode = (params.get("code") || "").toUpperCase();
+    const prePid  = (params.get("pid")  || "").toUpperCase();
+
+    if (preCode) {
+      codeInput.value = preCode;
+      document.getElementById("fieldCode").textContent = preCode;
+    }
+    if (prePid) {
+      pidInput.value = prePid;
+      lookupPlayer(prePid);
+    }
   </script>
 </body>
 </html>
