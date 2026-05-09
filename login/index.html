@@ -774,6 +774,186 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ════════════════════════════
+       TOURNAMENT
+    ════════════════════════════ */
+    #tournamentCard {
+      display: none; flex-direction: column;
+      gap: 12px; width: 100%;
+    }
+
+    body.view-tournament .app { justify-content: flex-start; }
+    body.view-tournament #tournamentCard { display: flex; }
+    body.view-tournament #roomCard .room-main-title,
+    body.view-tournament #roomCard .menu-grid,
+    body.view-tournament #roomCard #lobbyBox,
+    body.view-tournament #roomCard .t-menu-section { display: none; }
+    body.view-game #tournamentCard { display: none !important; }
+
+    .t-menu-section {
+      display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;
+    }
+
+    .t-menu-divider {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--muted); font-size: 12px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .06em;
+      margin-top: 4px;
+    }
+
+    .t-menu-divider::before, .t-menu-divider::after {
+      content: ""; flex: 1; height: 1px;
+      background: var(--card-border);
+    }
+
+    .t-banner {
+      padding: 10px 16px; border-radius: var(--r);
+      font-size: 14px; font-weight: 700; text-align: center;
+      flex-shrink: 0;
+    }
+
+    .t-banner-warn  { background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.3); color: #fde68a; }
+    .t-banner-ready { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.3); color: #6ee7b7; }
+    .t-banner-info  { background: rgba(124,58,237,.12); border: 1px solid rgba(124,58,237,.3); color: #c4b5fd; }
+
+    .t-code {
+      font-family: 'Fredoka One', cursive;
+      font-size: 16px; color: var(--gold);
+      letter-spacing: .08em;
+    }
+
+    .t-lobby-players { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
+
+    .t-lobby-player {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      background: var(--card); border: 1px solid var(--card-border);
+      border-radius: var(--r); font-size: 14px; font-weight: 700;
+    }
+
+    .t-color-dot {
+      width: 13px; height: 13px; border-radius: 50%;
+      flex-shrink: 0; border: 1.5px solid rgba(255,255,255,.25);
+    }
+
+    .t-phase-bar {
+      display: flex; gap: 6px; align-items: center;
+      margin-bottom: 4px; flex-wrap: wrap;
+    }
+
+    .t-phase-pip {
+      padding: 4px 10px; border-radius: 999px;
+      font-size: 12px; font-weight: 800;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      color: var(--muted);
+    }
+
+    .t-phase-pip.active {
+      background: rgba(124,58,237,.25);
+      border-color: rgba(167,139,250,.5);
+      color: #c4b5fd;
+    }
+
+    .t-phase-pip.done {
+      background: rgba(16,185,129,.18);
+      border-color: rgba(16,185,129,.4);
+      color: #6ee7b7;
+    }
+
+    .t-player-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px;
+    }
+
+    .t-player-card {
+      background: var(--card); border: 1px solid var(--card-border);
+      border-radius: var(--r2); padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+
+    .t-card-header {
+      display: flex; align-items: center; gap: 7px;
+    }
+
+    .t-rank-num {
+      font-family: 'Fredoka One', cursive;
+      font-size: 16px; color: var(--gold);
+    }
+
+    .t-card-name {
+      font-weight: 800; font-size: 14px; flex: 1;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    .t-card-avg { font-size: 13px; color: var(--muted); font-weight: 700; }
+    .t-card-avg strong { color: #e2e8f0; }
+
+    .t-card-status {
+      font-size: 12px; font-weight: 800;
+      padding: 3px 8px; border-radius: 999px; width: fit-content;
+    }
+
+    .t-card-status.playing { background: rgba(16,185,129,.18); color: #6ee7b7; }
+    .t-card-status.done    { background: rgba(167,139,250,.18); color: #c4b5fd; }
+    .t-card-status.waiting { background: rgba(255,255,255,.06); color: var(--muted); }
+
+    .t-rating-row { display: flex; flex-wrap: wrap; gap: 4px; }
+
+    .t-rating-chip {
+      background: rgba(124,58,237,.2); border: 1px solid rgba(167,139,250,.3);
+      color: #c4b5fd; font-size: 11px; font-weight: 800;
+      padding: 2px 7px; border-radius: 999px;
+    }
+
+    .t-phase-status {
+      font-size: 13px; color: var(--muted); font-weight: 700;
+      text-align: center; padding: 4px 0;
+    }
+
+    .t-info-line {
+      font-size: 14px; font-weight: 700; padding: 8px 0;
+      text-align: center; color: var(--text);
+    }
+
+    .t-rankings-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 16px; color: var(--gold); margin-bottom: 6px;
+    }
+
+    .t-rank-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px;
+      background: var(--card); border: 1px solid var(--card-border);
+      border-radius: var(--r); font-size: 14px; font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .t-rank-row.me {
+      border-color: rgba(167,139,250,.4);
+      background: rgba(124,58,237,.1);
+    }
+
+    .t-rank-avg { margin-left: auto; color: var(--gold); font-weight: 800; font-size: 13px; }
+
+    .t-final-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 22px; color: var(--gold);
+      text-align: center; margin-bottom: 10px;
+    }
+
+    .t-final-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      background: var(--card); border: 1px solid var(--card-border);
+      border-radius: var(--r); margin-bottom: 6px;
+    }
+
+    .t-final-medal { font-size: 20px; }
+    .t-final-name  { flex: 1; font-weight: 800; font-size: 15px; }
+    .t-final-avg   { font-family: 'Fredoka One', cursive; font-size: 17px; color: var(--gold); }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -883,12 +1063,78 @@
         </div>
       </div>
 
+      <!-- ══ TOURNAMENT MENU ══ -->
+      <div class="t-menu-section">
+        <div class="t-menu-divider">Tournaments</div>
+        <div class="menu-grid">
+          <div class="menu-box">
+            <h3>&#127942; Create Tournament</h3>
+            <label for="tCreateColor">Your Color</label>
+            <div class="color-row">
+              <input id="tCreateColor" type="color" value="#e03131">
+              <span>Pick a color</span>
+            </div>
+            <button onclick="createTournament()" style="width:100%;margin-top:4px;">Create Tournament</button>
+          </div>
+          <div class="menu-box">
+            <h3>&#127919; Join Tournament</h3>
+            <label for="tJoinCode">Tournament Code</label>
+            <input id="tJoinCode" placeholder="Enter 8-letter code"
+              oninput="this.value=this.value.replace(/[^A-Za-z]/g,'').toUpperCase().slice(0,8)"
+              autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+              maxlength="8">
+            <label for="tJoinColor">Your Color</label>
+            <div class="color-row">
+              <input id="tJoinColor" type="color" value="#1971c2">
+              <span>Pick a color</span>
+            </div>
+            <button onclick="joinTournament()" style="width:100%;margin-top:4px;">Join Tournament</button>
+          </div>
+        </div>
+      </div>
+
       <div id="lobbyBox">
         <div class="lobby-label">Room Code</div>
         <div class="room-code" id="roomCodeDisplay"></div>
         <div class="small" id="lobbyPlayers"></div>
         <button id="startRoomBtn" onclick="startRoomGame()" style="margin-top:10px;">Start Game</button>
       </div>
+    </section>
+
+    <!-- ══ TOURNAMENT CARD ══ -->
+    <section class="card" id="tournamentCard">
+
+      <!-- Host view -->
+      <div id="tHostView" style="display:none">
+        <div class="t-banner" id="tBanner"></div>
+
+        <div id="tLobbyContent">
+          <div class="t-lobby-players" id="tLobbyPlayers"></div>
+          <button id="tStartBtn" onclick="startTournament()" disabled style="width:100%;margin-top:8px;">Start Tournament</button>
+        </div>
+
+        <div id="tDashContent" style="display:none">
+          <div class="t-phase-bar" id="tPhaseBar"></div>
+          <div class="t-player-cards" id="tPlayerCards"></div>
+          <div class="t-phase-status" id="tPhaseStatus"></div>
+          <button id="tNextPhaseBtn" onclick="advanceTournamentPhase()" style="display:none;width:100%;margin-top:8px;"></button>
+          <div id="tFinalContent"></div>
+        </div>
+
+        <button class="danger" onclick="endTournamentConfirm()" style="margin-top:12px;width:100%;">End Tournament</button>
+      </div>
+
+      <!-- Player view -->
+      <div id="tPlayerView" style="display:none">
+        <div class="t-banner" id="tPlayerBanner"></div>
+        <div id="tPlayerInfo"></div>
+        <div id="tPlayerRankings"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button id="tJoinGameBtn" onclick="joinTournamentGame()" style="display:none;flex:1;">Join Your Game</button>
+          <button class="secondary" onclick="leaveTournament()" style="flex:1;">Leave Tournament</button>
+        </div>
+      </div>
+
     </section>
 
     <!-- ══ GAME AREA ══ -->
@@ -985,6 +1231,10 @@
     let selectedGameType = "poison";
     let aiMoveTimer = null;
     let selectedDifficulty = "medium";
+    let tournamentId = null;
+    let tournament = null;
+    let unsubTournament = null;
+    const reportedRooms = new Set();
 
     window.signUp = signUp;
     window.login = login;
@@ -997,6 +1247,13 @@
     window.confirmResetRoom = confirmResetRoom;
     window.hideGameOver = hideGameOver;
     window.backToRoom = backToRoom;
+    window.createTournament = createTournament;
+    window.joinTournament = joinTournament;
+    window.startTournament = startTournament;
+    window.advanceTournamentPhase = advanceTournamentPhase;
+    window.joinTournamentGame = joinTournamentGame;
+    window.leaveTournament = leaveTournament;
+    window.endTournamentConfirm = endTournamentConfirm;
     window.updateMyLobbyColor = updateMyLobbyColor;
     window.updateGameTypeOptions = updateGameTypeOptions;
     window.selectGameType = selectGameType;
@@ -1323,6 +1580,13 @@ showRoom();
       document.getElementById("gameArea").style.display = "none";
     }
 
+    function showTournamentView() {
+      document.body.className = "view-tournament";
+      document.getElementById("authCard").style.display = "none";
+      document.getElementById("roomCard").style.display = "flex";
+      document.getElementById("gameArea").style.display = "none";
+    }
+
     function showGame() {
       document.body.className = "view-game";
       document.getElementById("authCard").style.display = "none";
@@ -1549,9 +1813,18 @@ showRoom();
             clearTimeout(aiMoveTimer);
             aiMoveTimer = null;
           }
+          // Tournament result reporting — idempotent via Firestore transaction
+          if (state.status === "ended" && state.tournamentCode && !reportedRooms.has(code)) {
+            reportedRooms.add(code);
+            reportTournamentResult(state);
+          }
         } else {
-          showRoom();
-          renderLobby();
+          if (tournamentId) {
+            showTournamentView();
+          } else {
+            showRoom();
+            renderLobby();
+          }
         }
       });
     }
@@ -1791,7 +2064,9 @@ showRoom();
           `${turnText} | Round ${state.fullRoundNumber}${gasText}`;
       } else if (state.status === "ended") {
         document.getElementById("info").textContent = "Game over. Hide final screen to inspect the board.";
-        document.getElementById("backToRoomBtn").style.display = "block";
+        const btrBtn = document.getElementById("backToRoomBtn");
+        btrBtn.textContent = tournamentId ? "Back to Tournament" : "Back to Room";
+        btrBtn.style.display = "block";
         showGameOver();
       }
 
@@ -2731,7 +3006,14 @@ showRoom();
 
     function backToRoom() {
       document.getElementById("gameOver").style.display = "none";
-      showRoom();
+      if (tournamentId) {
+        if (unsubRoom) { unsubRoom(); unsubRoom = null; }
+        roomId = null;
+        state = null;
+        showTournamentView();
+      } else {
+        showRoom();
+      }
     }
 
     function pointsForTowerLevel(level) {
@@ -2809,6 +3091,539 @@ showRoom();
         [arr[i], arr[j]] = [arr[j], arr[i]];
       }
       return arr;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //   TOURNAMENT SYSTEM
+    // ═══════════════════════════════════════════════════════
+
+    const PHASE_LABELS = ["", "Round 1: vs AI", "Round 2: 1v1", "Rounds 3 & 4: 3-Player", "Round 5: 4-Player", "Round 6: Finals"];
+
+    function generateTournamentCode() {
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      let code = "";
+      for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+      return code;
+    }
+
+    async function createTournament() {
+      if (!currentUser || !currentProfile) return;
+      const color = document.getElementById("tCreateColor").value;
+      let code = generateTournamentCode();
+      for (let i = 0; i < 10; i++) {
+        if (!(await getDoc(doc(db, "tournaments", code))).exists()) break;
+        code = generateTournamentCode();
+      }
+      await setDoc(doc(db, "tournaments", code), {
+        code, hostUid: currentUser.uid, hostUsername: currentProfile.username,
+        status: "lobby", currentPhase: 0, phasesComplete: [],
+        players: [], games: [],
+        createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+      });
+      tournamentId = code;
+      subscribeTournament(code);
+    }
+
+    async function joinTournament() {
+      if (!currentUser || !currentProfile) return;
+      const code = document.getElementById("tJoinCode").value.trim().toUpperCase();
+      if (code.length !== 8) { alert("Tournament code must be 8 letters."); return; }
+      const color = document.getElementById("tJoinColor").value;
+      try {
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(doc(db, "tournaments", code));
+          if (!snap.exists()) throw new Error("Tournament not found.");
+          const d = snap.data();
+          if (d.hostUid === currentUser.uid) throw new Error("Hosts cannot join as a player.");
+          if (d.status !== "lobby") throw new Error("This tournament has already started.");
+          if ((d.players || []).length >= 4) throw new Error("Tournament is full (4/4).");
+          if ((d.players || []).some(p => p.uid === currentUser.uid)) throw new Error("Already joined.");
+          const players = [...(d.players || []), {
+            uid: currentUser.uid, username: currentProfile.username,
+            color: pickAvailableColor(d.players || [], color),
+            ratings: [], phaseNumbers: [], gamesWon: 0, totalPoints: 0,
+            status: "waiting", currentRoomCode: null
+          }];
+          tx.update(doc(db, "tournaments", code), { players, updatedAt: serverTimestamp() });
+        });
+        tournamentId = code;
+        subscribeTournament(code);
+      } catch(e) { alert(e.message); }
+    }
+
+    function subscribeTournament(code) {
+      if (unsubTournament) unsubTournament();
+      tournamentId = code;
+      unsubTournament = onSnapshot(doc(db, "tournaments", code), (snap) => {
+        if (!snap.exists()) { alert("Tournament no longer exists."); leaveTournamentCleanup(); showRoom(); return; }
+        tournament = snap.data();
+        showTournamentView();
+        if (currentUser.uid === tournament.hostUid) renderTournamentHost();
+        else renderTournamentPlayer();
+      });
+    }
+
+    function renderTournamentHost() {
+      document.getElementById("tHostView").style.display = "";
+      document.getElementById("tPlayerView").style.display = "none";
+      renderHostBanner();
+      if (tournament.status === "lobby") {
+        document.getElementById("tLobbyContent").style.display = "";
+        document.getElementById("tDashContent").style.display = "none";
+        renderHostLobbyPlayers();
+      } else {
+        document.getElementById("tLobbyContent").style.display = "none";
+        document.getElementById("tDashContent").style.display = "";
+        renderHostDashboard();
+      }
+    }
+
+    function renderHostBanner() {
+      const el = document.getElementById("tBanner");
+      const count = (tournament.players || []).length;
+      const startBtn = document.getElementById("tStartBtn");
+      if (tournament.status === "lobby") {
+        el.style.display = "";
+        el.className = count < 4 ? "t-banner t-banner-warn" : "t-banner t-banner-ready";
+        el.innerHTML = count < 4
+          ? `Tournament cannot start: <strong>${count}/4</strong> people have entered. &nbsp;CODE: <span class="t-code">${tournament.code}</span>`
+          : `Ready! 4/4 players joined. &nbsp;CODE: <span class="t-code">${tournament.code}</span>`;
+        startBtn.style.display = "";
+        startBtn.disabled = count < 4;
+      } else {
+        el.style.display = "none";
+        startBtn.style.display = "none";
+      }
+    }
+
+    function renderHostLobbyPlayers() {
+      const el = document.getElementById("tLobbyPlayers");
+      el.innerHTML = "";
+      (tournament.players || []).forEach(p => {
+        const d = document.createElement("div");
+        d.className = "t-lobby-player";
+        d.innerHTML = `<span class="t-color-dot" style="background:${p.color}"></span><span>${p.username}</span>`;
+        el.appendChild(d);
+      });
+    }
+
+    function renderHostDashboard() {
+      // Phase bar
+      const pb = document.getElementById("tPhaseBar");
+      pb.innerHTML = "";
+      const phaseDisplayLabels = ["1", "2", "3&4", "5", "6"];
+      [1,2,3,4,5].forEach((ph, i) => {
+        const done = (tournament.phasesComplete || []).includes(ph);
+        const active = tournament.currentPhase === ph;
+        const sp = document.createElement("span");
+        sp.className = "t-phase-pip" + (done ? " done" : active ? " active" : "");
+        sp.textContent = phaseDisplayLabels[i];
+        pb.appendChild(sp);
+      });
+
+      // Player cards
+      const rankings = getTournamentRankings(tournament.players || []);
+      const cardsEl = document.getElementById("tPlayerCards");
+      cardsEl.innerHTML = "";
+      rankings.forEach((p, idx) => {
+        const avg = p.ratings.length
+          ? (p.ratings.reduce((s,r)=>s+r,0)/p.ratings.length).toFixed(1) : "—";
+        const phaseGames = (tournament.games || []).filter(g =>
+          g.playerUids.includes(p.uid) && g.phase === tournament.currentPhase);
+        const activeGame = phaseGames.find(g => g.status !== "done");
+        const statusLabel = p.status === "playing" ? `Playing` :
+                            p.status === "done" ? "Done ✓" : "Waiting";
+        const chips = (p.ratings || []).map(r =>
+          `<span class="t-rating-chip">${r}</span>`).join("") ||
+          `<span style="color:var(--muted);font-size:12px">No ratings yet</span>`;
+        const card = document.createElement("div");
+        card.className = "t-player-card";
+        card.innerHTML = `
+          <div class="t-card-header">
+            <span class="t-rank-num">#${idx+1}</span>
+            <span class="t-color-dot" style="background:${p.color}"></span>
+            <span class="t-card-name">${p.username}</span>
+          </div>
+          <div class="t-card-avg">Avg rating: <strong>${avg}</strong></div>
+          <div class="t-card-status ${p.status}">${statusLabel}</div>
+          <div class="t-rating-row">${chips}</div>`;
+        cardsEl.appendChild(card);
+      });
+
+      // Phase status + next-phase button
+      const phase = tournament.currentPhase;
+      const phaseGames = (tournament.games || []).filter(g => g.phase === phase);
+      const doneCount = phaseGames.filter(g => g.status === "done").length;
+      const phaseComplete = (tournament.phasesComplete || []).includes(phase);
+      const statusEl = document.getElementById("tPhaseStatus");
+      const nextBtn = document.getElementById("tNextPhaseBtn");
+
+      if (tournament.status === "finished") {
+        statusEl.textContent = "Tournament complete!";
+        nextBtn.style.display = "none";
+        document.getElementById("tFinalContent").style.display = "";
+        renderFinalResults();
+      } else if (phase === 0) {
+        statusEl.textContent = "";
+        nextBtn.style.display = "none";
+      } else {
+        statusEl.textContent = `${PHASE_LABELS[phase]}: ${doneCount}/${phaseGames.length} games complete`;
+        if (phaseComplete && phase < 5) {
+          nextBtn.style.display = "";
+          nextBtn.textContent = `▶ Start ${PHASE_LABELS[phase + 1]}`;
+        } else {
+          nextBtn.style.display = "none";
+          if (phaseComplete && phase === 5 && tournament.status !== "finished") finalizeTournament();
+        }
+      }
+    }
+
+    function renderFinalResults() {
+      const rankings = getTournamentRankings(tournament.players || []);
+      const el = document.getElementById("tFinalContent");
+      const medals = ["🥇","🥈","🥉","4️⃣"];
+      el.innerHTML = `<div class="t-final-title">🏆 Final Results</div>` +
+        rankings.map((p, i) => {
+          const avg = p.ratings.length
+            ? (p.ratings.reduce((s,r)=>s+r,0)/p.ratings.length).toFixed(1) : "0";
+          return `<div class="t-final-row">
+            <span class="t-final-medal">${medals[i]}</span>
+            <span class="t-color-dot" style="background:${p.color}"></span>
+            <span class="t-final-name">${p.username}</span>
+            <span class="t-final-avg">${avg}</span>
+          </div>`;
+        }).join("");
+    }
+
+    function renderTournamentPlayer() {
+      document.getElementById("tPlayerView").style.display = "";
+      document.getElementById("tHostView").style.display = "none";
+      const me = (tournament.players || []).find(p => p.uid === currentUser.uid);
+      if (!me) return;
+      const phase = tournament.currentPhase;
+      const bannerEl = document.getElementById("tPlayerBanner");
+      if (tournament.status === "lobby") {
+        bannerEl.className = "t-banner t-banner-warn";
+        bannerEl.textContent = `Waiting for the tournament to start… CODE: ${tournament.code}`;
+      } else if (tournament.status === "finished") {
+        bannerEl.className = "t-banner t-banner-ready";
+        bannerEl.textContent = "Tournament complete! Final results below.";
+      } else {
+        bannerEl.className = "t-banner t-banner-info";
+        bannerEl.textContent = PHASE_LABELS[phase] || `Round ${phase}`;
+      }
+
+      const infoEl = document.getElementById("tPlayerInfo");
+      const joinBtn = document.getElementById("tJoinGameBtn");
+      const myGame = (tournament.games || []).find(g =>
+        g.playerUids.includes(currentUser.uid) && g.phase === phase && g.status !== "done");
+
+      if (myGame && me.status === "playing") {
+        joinBtn.style.display = "";
+        joinBtn.dataset.roomCode = myGame.roomCode;
+        infoEl.innerHTML = `<div class="t-info-line">🎮 Your game is ready — <strong>${myGame.roomCode}</strong></div>`;
+      } else if (me.status === "done" || (!myGame && phase > 0)) {
+        joinBtn.style.display = "none";
+        const notInRound = phase > 0 && !myGame;
+        infoEl.innerHTML = `<div class="t-info-line">${notInRound ? "⏳ You don't play this round — waiting for others." : "✅ Round done — waiting for others."}</div>`;
+      } else {
+        joinBtn.style.display = "none";
+        infoEl.innerHTML = `<div class="t-info-line">⏳ Waiting for the next round to begin.</div>`;
+      }
+
+      // Show final results if finished
+      const rankingsEl = document.getElementById("tPlayerRankings");
+      if (tournament.status === "finished") {
+        const rankings = getTournamentRankings(tournament.players || []);
+        const medals = ["🥇","🥈","🥉","4️⃣"];
+        rankingsEl.innerHTML = `<div class="t-final-title" style="margin-top:10px">🏆 Final Results</div>` +
+          rankings.map((p, i) => {
+            const avg = p.ratings.length
+              ? (p.ratings.reduce((s,r)=>s+r,0)/p.ratings.length).toFixed(1) : "0";
+            const isMe = p.uid === currentUser.uid;
+            return `<div class="t-rank-row${isMe?" me":""}">
+              <span>${medals[i]}</span>
+              <span class="t-color-dot" style="background:${p.color}"></span>
+              <span>${p.username}${isMe?" (you)":""}</span>
+              <span class="t-rank-avg">${avg}</span>
+            </div>`;
+          }).join("");
+      } else {
+        const rankings = getTournamentRankings(tournament.players || []);
+        if (rankings.length) {
+          const medals = ["🥇","🥈","🥉","4️⃣"];
+          rankingsEl.innerHTML = `<div class="t-rankings-title">Current Rankings</div>` +
+            rankings.map((p, i) => {
+              const avg = p.ratings.length
+                ? (p.ratings.reduce((s,r)=>s+r,0)/p.ratings.length).toFixed(1) : "—";
+              const isMe = p.uid === currentUser.uid;
+              return `<div class="t-rank-row${isMe?" me":""}">
+                <span>${medals[i]||i+1}</span>
+                <span class="t-color-dot" style="background:${p.color}"></span>
+                <span>${p.username}${isMe?" (you)":""}</span>
+                <span class="t-rank-avg">${avg}</span>
+              </div>`;
+            }).join("");
+        } else {
+          rankingsEl.innerHTML = "";
+        }
+      }
+    }
+
+    function getTournamentRankings(players) {
+      return [...players].sort((a, b) => {
+        const avgA = a.ratings.length ? a.ratings.reduce((s,r)=>s+r,0)/a.ratings.length : 0;
+        const avgB = b.ratings.length ? b.ratings.reduce((s,r)=>s+r,0)/b.ratings.length : 0;
+        if (Math.abs(avgB - avgA) > 0.001) return avgB - avgA;
+        const na = a.username.toLowerCase(), nb = b.username.toLowerCase();
+        if (na < nb) return -1; if (na > nb) return 1;
+        if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
+        return b.totalPoints - a.totalPoints;
+      });
+    }
+
+    async function startTournament() {
+      if (!tournament || tournament.hostUid !== currentUser.uid) return;
+      if ((tournament.players || []).length < 4) return;
+      await advanceTournamentPhase();
+    }
+
+    async function advanceTournamentPhase() {
+      if (!tournament || tournament.hostUid !== currentUser.uid) return;
+      const nextPhase = tournament.currentPhase + 1;
+      if (nextPhase > 5) return;
+      const rankings = getTournamentRankings(tournament.players);
+      let gamesToCreate = [];
+      if (nextPhase === 1) {
+        gamesToCreate = rankings.map(p => ({ playerUids: [p.uid, "AI"], playerCount: 2, aiDifficulty: "medium" }));
+      } else if (nextPhase === 2) {
+        gamesToCreate = [
+          { playerUids: [rankings[0].uid, rankings[2].uid], playerCount: 2 },
+          { playerUids: [rankings[1].uid, rankings[3].uid], playerCount: 2 }
+        ];
+      } else if (nextPhase === 3) {
+        gamesToCreate = [
+          { playerUids: [rankings[0].uid, rankings[1].uid, rankings[2].uid], playerCount: 3 },
+          { playerUids: [rankings[1].uid, rankings[2].uid, rankings[3].uid], playerCount: 3 }
+        ];
+      } else if (nextPhase === 4) {
+        gamesToCreate = [{ playerUids: rankings.map(p => p.uid), playerCount: 4 }];
+      } else if (nextPhase === 5) {
+        gamesToCreate = [
+          { playerUids: [rankings[0].uid, rankings[3].uid], playerCount: 2 },
+          { playerUids: [rankings[1].uid, rankings[2].uid], playerCount: 2 }
+        ];
+      }
+
+      const newGames = [];
+      for (const g of gamesToCreate) {
+        const rc = await createTournamentRoom(tournament.code, nextPhase, g.playerUids, g.playerCount, g.aiDifficulty || null);
+        newGames.push({ phase: nextPhase, roomCode: rc, playerUids: g.playerUids, status: "playing" });
+      }
+
+      const updatedPlayers = tournament.players.map(p => {
+        const myGame = newGames.find(g => g.playerUids.includes(p.uid));
+        return { ...p, status: myGame ? "playing" : "waiting", currentRoomCode: myGame ? myGame.roomCode : null };
+      });
+
+      await updateDoc(doc(db, "tournaments", tournament.code), {
+        currentPhase: nextPhase, status: "playing",
+        games: [...(tournament.games || []), ...newGames],
+        players: updatedPlayers, updatedAt: serverTimestamp()
+      });
+    }
+
+    async function createTournamentRoom(tCode, phase, playerUids, playerCount, aiDifficulty) {
+      const tSnap = await getDoc(doc(db, "tournaments", tCode));
+      const tData = tSnap.data();
+      let rc = roomCode();
+      for (let i = 0; i < 20; i++) {
+        if (!(await getDoc(doc(db, "games", rc))).exists()) break;
+        rc = roomCode();
+      }
+      const blank = blankGame(rc, playerCount, "classic");
+      // Make each player's own device run the AI (first human is game host)
+      const firstHuman = playerUids.find(uid => uid !== "AI");
+      blank.hostUid = firstHuman;
+      blank.tournamentCode = tCode;
+      blank.tournamentPhase = phase;
+      if (aiDifficulty) blank.aiDifficulty = aiDifficulty;
+      blank.players = playerUids.map(uid => {
+        if (uid === "AI") return {
+          uid: "AI_PLAYER", username: "CPU", color: "#6366f1",
+          id: 0, x: null, y: null, points: 0, infected: false, eliminated: false, isAI: true
+        };
+        const tp = tData.players.find(p => p.uid === uid);
+        return { uid, username: tp.username, color: tp.color, id: 0, x: null, y: null, points: 0, infected: false, eliminated: false };
+      });
+      blank.playerCount = playerCount;
+      await setDoc(doc(db, "games", rc), blank);
+      await autoStartTournamentGame(rc, blank);
+      return rc;
+    }
+
+    async function autoStartTournamentGame(rc, gameData) {
+      const next = clone(gameData);
+      const starts = generateStartPositions(next.playerCount, next.size, next.twoPlayerMode);
+      next.tiles = createTiles(next.size);
+      shuffle(next.players);
+      next.players = next.players.map((p, i) => ({
+        ...p, id: i, x: starts[i].x, y: starts[i].y,
+        points: 0, infected: false, eliminated: false
+      }));
+      next.players.forEach(p => { getTileFrom(next.tiles, p.x, p.y).revealed = true; });
+      placeTowersIn(next, starts);
+      next.status = "playing"; next.currentPlayer = 0; next.fullRoundNumber = 1;
+      next.finalWinnerId = null; next.consecutiveStayTurns = 0;
+      next.gasOrigin = null; next.gasActive = false; next.infectedTiles = [];
+      next.infectionSafeZones = {}; next.gasRound = 0; next.gasFinalized = false;
+      next.gameOverReason = "";
+      await updateDoc(doc(db, "games", rc), stripServerTimestamp(next));
+    }
+
+    function joinTournamentGame() {
+      const rc = document.getElementById("tJoinGameBtn").dataset.roomCode;
+      if (!rc) return;
+      subscribeRoom(rc);
+    }
+
+    async function reportTournamentResult(gameState) {
+      if (!gameState.tournamentCode) return;
+      const tRef = doc(db, "tournaments", gameState.tournamentCode);
+      try {
+        await runTransaction(db, async (tx) => {
+          const tSnap = await tx.get(tRef);
+          if (!tSnap.exists()) return;
+          const tData = tSnap.data();
+          const games = clone(tData.games || []);
+          const gi = games.findIndex(g => g.roomCode === gameState.code);
+          if (gi === -1 || games[gi].status === "done") return;
+
+          const humanPlayers = gameState.players.filter(p => !p.isAI);
+          const results = humanPlayers.map(p => ({
+            uid: p.uid,
+            rating: calculateTournamentRating(p.uid, gameState),
+            points: p.points,
+            won: p.id === gameState.finalWinnerId
+          }));
+          games[gi] = { ...games[gi], status: "done", results };
+
+          const players = clone(tData.players).map(tp => {
+            const r = results.find(x => x.uid === tp.uid);
+            if (!r) return tp;
+            return {
+              ...tp,
+              ratings: [...tp.ratings, r.rating],
+              phaseNumbers: [...(tp.phaseNumbers || []), tData.currentPhase],
+              gamesWon: tp.gamesWon + (r.won ? 1 : 0),
+              totalPoints: tp.totalPoints + r.points,
+              status: "done", currentRoomCode: null
+            };
+          });
+
+          const phaseGames = games.filter(g => g.phase === tData.currentPhase);
+          const phaseComplete = phaseGames.every(g => g.status === "done");
+          const phasesComplete = phaseComplete
+            ? [...new Set([...(tData.phasesComplete || []), tData.currentPhase])]
+            : (tData.phasesComplete || []);
+          const finished = tData.currentPhase === 5 && phaseComplete;
+
+          tx.update(tRef, {
+            games, players, phasesComplete,
+            status: finished ? "finished" : tData.status,
+            updatedAt: serverTimestamp()
+          });
+        });
+      } catch(e) { console.error("Tournament report error:", e); }
+    }
+
+    function calculateTournamentRating(playerUid, gameState) {
+      const players = gameState.players;
+      const myPlayer = players.find(p => p.uid === playerUid);
+      if (!myPlayer) return 0;
+      const myId = myPlayer.id;
+      const opponents = players.filter(p => p.id !== myId);
+      const playerCount = players.length;
+      const isWinner = gameState.finalWinnerId === myId;
+
+      // Placement for cap
+      const sorted = [...players].sort((a, b) => b.points - a.points);
+      const placement = sorted.findIndex(p => p.id === myId) + 1;
+      let cap;
+      if (placement === 1) cap = 100;
+      else if (placement === 2 && playerCount === 4) cap = 83;
+      else if (placement === 2 && playerCount === 3) cap = 78;
+      else if (placement === 3 && playerCount === 4) cap = 72;
+      else cap = 67;
+
+      // Factor 1 — Speed (winner only, 0–33.33)
+      let speedScore = 0;
+      if (isWinner) {
+        const maxRounds = playerCount === 2 ? 80 : playerCount === 3 ? 100 : 120;
+        speedScore = Math.max(0, 1 - gameState.fullRoundNumber / maxRounds) * 33.33;
+      }
+
+      // Factor 2 — Tower dominance: pairwise average (0–33.33)
+      const myTowers = countOwnedTowersIn(gameState, myId);
+      const totalTowers = players.reduce((s, p) => s + countOwnedTowersIn(gameState, p.id), 0);
+      let towerScore = 0;
+      if (opponents.length > 0 && totalTowers > 0) {
+        const ratios = opponents.map(opp => {
+          const oppT = countOwnedTowersIn(gameState, opp.id);
+          const sum = myTowers + oppT;
+          return sum === 0 ? 0.5 : myTowers / sum;
+        });
+        towerScore = (ratios.reduce((s,r)=>s+r,0) / ratios.length) * 33.33;
+      }
+
+      // Factor 3 — Point dominance: pairwise average (0–33.33)
+      const myPts = myPlayer.points;
+      const totalPts = players.reduce((s, p) => s + p.points, 0);
+      let pointScore = 0;
+      if (opponents.length > 0 && totalPts > 0) {
+        const ratios = opponents.map(opp => {
+          const sum = myPts + opp.points;
+          return sum === 0 ? 0.5 : myPts / sum;
+        });
+        pointScore = (ratios.reduce((s,r)=>s+r,0) / ratios.length) * 33.33;
+      }
+
+      const raw = speedScore + towerScore + pointScore;
+      return Math.min(cap, Math.max(0, Math.round(raw * 10) / 10));
+    }
+
+    function leaveTournament() {
+      if (!confirm("Leave the tournament? You cannot rejoin once you leave.")) return;
+      leaveTournamentCleanup();
+      showRoom();
+    }
+
+    function leaveTournamentCleanup() {
+      if (unsubTournament) { unsubTournament(); unsubTournament = null; }
+      tournamentId = null;
+      tournament = null;
+    }
+
+    async function endTournamentConfirm() {
+      const msgs = [
+        "Are you sure you want to end the tournament?",
+        "This will end the tournament for all 4 players. Really sure?",
+        "Final confirmation — permanently end the tournament?"
+      ];
+      for (const msg of msgs) {
+        if (!confirm(msg)) return;
+      }
+      await updateDoc(doc(db, "tournaments", tournamentId), {
+        status: "finished", updatedAt: serverTimestamp()
+      });
+    }
+
+    async function finalizeTournament() {
+      if (!tournament || tournament.hostUid !== currentUser.uid) return;
+      if (tournament.status === "finished") return;
+      await updateDoc(doc(db, "tournaments", tournamentId), {
+        status: "finished", updatedAt: serverTimestamp()
+      });
     }
 
     document.addEventListener("keydown", function(event) {
