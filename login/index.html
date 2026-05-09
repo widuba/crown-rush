@@ -1460,12 +1460,19 @@
 
   currentProfile = profileSnap.data();
 
-  // Backfill Player ID for accounts created before this feature
+  // Ensure Player ID exists on profile and in the playerIds lookup collection
   if (!currentProfile.playerId) {
     const newPid = generatePlayerId();
     await updateDoc(doc(db, "users", user.uid), { playerId: newPid });
     await setDoc(doc(db, "playerIds", newPid), { username: currentProfile.username, uid: user.uid });
     currentProfile = { ...currentProfile, playerId: newPid };
+  } else {
+    // playerIds doc may be missing if the account was backfilled before that
+    // write was added — ensure it exists on every login (cheap read + rare write)
+    const pidSnap = await getDoc(doc(db, "playerIds", currentProfile.playerId));
+    if (!pidSnap.exists()) {
+      await setDoc(doc(db, "playerIds", currentProfile.playerId), { username: currentProfile.username, uid: user.uid });
+    }
   }
 
   setSignedInDisplay(currentProfile.username, currentProfile.playerId);
