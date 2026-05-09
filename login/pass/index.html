@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -223,7 +222,7 @@
 
       <div class="pass-qr-col">
         <div class="qr-wrap">
-          <canvas id="qrCanvas" width="148" height="148"></canvas>
+          <img id="qrImg" width="148" height="148" alt="QR code" style="display:block;border-radius:4px;" />
         </div>
         <div class="qr-label">Scan to join</div>
       </div>
@@ -238,9 +237,10 @@
   </div>
 
   <script type="module">
-    import { initializeApp }                      from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, doc, getDoc }          from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged }        from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { initializeApp }             from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import QRCode                        from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 
     const app = initializeApp({
       apiKey: "AIzaSyDnLusbSL7Fa-aAceIm3vLE_yRa1R-VajE",
@@ -269,15 +269,17 @@
       return codeInput.value.toUpperCase().replace(/[^A-Z]/g, "");
     }
 
-    function updateQR(code) {
+    async function updateQR(code) {
       if (!code) return;
       const url = `${window.location.origin}/login/?tjoin=${code}`;
       document.getElementById("dispURL").textContent = url;
-      QRCode.toCanvas(
-        document.getElementById("qrCanvas"), url,
-        { width: 148, margin: 1, color: { dark: "#000000", light: "#ffffff" } },
-        err => { if (err) console.error(err); }
-      );
+      try {
+        const dataUrl = await QRCode.toDataURL(url, {
+          width: 148, margin: 1,
+          color: { dark: "#000000", light: "#ffffff" }
+        });
+        document.getElementById("qrImg").src = dataUrl;
+      } catch(e) { console.error("QR error:", e); }
     }
 
     async function lookupPlayer(pid) {
