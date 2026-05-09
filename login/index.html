@@ -1631,6 +1631,7 @@ showRoom();
       const starts = generateStartPositions(next.playerCount, next.size, next.twoPlayerMode);
 
       next.tiles = createTiles(next.size);
+      shuffle(next.players);
       next.players = next.players.map((p, i) => ({
         ...p,
         id: i,
