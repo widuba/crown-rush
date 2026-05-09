@@ -314,6 +314,15 @@
 
     .signed-label { font-size: 13px; color: var(--muted); font-weight: 700; }
     .signed-label b { color: var(--gold); font-size: 14px; }
+    .player-id-badge {
+      font-family: 'Fredoka One', cursive;
+      font-size: 11px; letter-spacing: .08em;
+      color: var(--muted);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      padding: 1px 7px; border-radius: 999px;
+      vertical-align: middle; margin-left: 5px;
+    }
 
     .htp-link {
       position: absolute; left: 50%; transform: translateX(-50%);
@@ -1093,7 +1102,7 @@
     <!-- ══ ROOM / LOBBY CARD ══ -->
     <section id="roomCard">
       <div class="room-header">
-        <span class="signed-label">Signed in as <b id="signedInAs"></b></span>
+        <span class="signed-label">Signed in as <b id="signedInAs"></b> <span class="player-id-badge" id="playerIdBadge" style="display:none"></span></span>
         <a class="htp-link" href="/how-to-play" target="_blank">&#10067; How to Play</a>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <button class="secondary leave-room-btn" onclick="leaveRoom()" style="padding:7px 14px;font-size:14px;">Leave Room</button>
@@ -1462,7 +1471,7 @@
     currentProfile = { ...currentProfile, playerId: newPid };
   }
 
-  document.getElementById("signedInAs").textContent = currentProfile.username;
+  setSignedInDisplay(currentProfile.username, currentProfile.playerId);
 
   // Auto-join from QR / pass link: ?tjoin=CODE&pid=PLAYERID
   const urlParams = new URLSearchParams(window.location.search);
@@ -1479,6 +1488,13 @@
   showRoom();
   hideLoading();
 });
+
+    function setSignedInDisplay(username, playerId) {
+      document.getElementById("signedInAs").textContent = username;
+      const badge = document.getElementById("playerIdBadge");
+      if (playerId) { badge.textContent = playerId; badge.style.display = ""; }
+      else { badge.style.display = "none"; }
+    }
 
     function usernameKey(name) {
       return name.trim().toLowerCase();
@@ -1540,7 +1556,7 @@
           email
         };
 
-        document.getElementById("signedInAs").textContent = username;
+        setSignedInDisplay(username, newPid);
         showRoom();
         setAuthMessage("Account created.");
       } catch (err) {
@@ -1626,7 +1642,7 @@
   provider: "google"
 };
 
-document.getElementById("signedInAs").textContent = username;
+setSignedInDisplay(username, newPid);
 showRoom();
     }
 
@@ -3485,7 +3501,7 @@ showRoom();
     }
 
     function openPlayerPass(p) {
-      const base = window.location.origin + "/pass/";
+      const base = window.location.origin + "/login/pass/";
       const url = `${base}?code=${encodeURIComponent(tournament.code)}&pid=${encodeURIComponent(p.playerId || "")}&name=${encodeURIComponent(p.username)}`;
       window.open(url, "_blank");
     }
