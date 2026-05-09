@@ -2418,11 +2418,14 @@ showRoom();
       tile.invaderProgress++;
 
       if (tile.invaderProgress >= 5) {
+        const captureAmt = cumulativeTowerPoints(tile.level);
+        const prevOwner = s.players.find(p => p.id === tile.owner);
+        if (prevOwner) prevOwner.points = Math.max(0, prevOwner.points - captureAmt);
         tile.owner = player.id;
         tile.invaderId = null;
         tile.invaderProgress = 0;
         tile.ownerProgress = 0;
-        player.points += pointsForTowerLevel(tile.level);
+        player.points += captureAmt;
       }
     }
 
