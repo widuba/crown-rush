@@ -848,6 +848,27 @@
       border-radius: var(--r); font-size: 14px; font-weight: 700;
     }
 
+    .t-pid-chip {
+      font-family: 'Fredoka One', cursive;
+      font-size: 12px; letter-spacing: .08em;
+      color: var(--gold); background: rgba(245,158,11,.1);
+      border: 1px solid rgba(245,158,11,.25);
+      padding: 2px 8px; border-radius: 999px;
+      flex-shrink: 0;
+    }
+
+    .t-pass-btn {
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px; font-weight: 800;
+      padding: 4px 12px; border-radius: 999px;
+      border: 1.5px solid rgba(167,139,250,.4);
+      background: rgba(124,58,237,.15);
+      color: #c4b5fd; cursor: pointer;
+      transition: background .15s;
+      flex-shrink: 0;
+    }
+    .t-pass-btn:hover { background: rgba(124,58,237,.3); }
+
     .t-color-dot {
       width: 13px; height: 13px; border-radius: 50%;
       flex-shrink: 0; border: 1.5px solid rgba(255,255,255,.25);
@@ -1313,6 +1334,8 @@
     window.backToRoom = backToRoom;
     window.createTournament = createTournament;
     window.joinTournament = joinTournament;
+    window.joinTournamentByCode = joinTournamentByCode;
+    window.openPlayerPass = openPlayerPass;
     window.startTournament = startTournament;
     window.advanceTournamentPhase = advanceTournamentPhase;
     window.joinTournamentGame = joinTournamentGame;
@@ -1430,7 +1453,28 @@
   }
 
   currentProfile = profileSnap.data();
+
+  // Backfill Player ID for accounts created before this feature
+  if (!currentProfile.playerId) {
+    const newPid = generatePlayerId();
+    await updateDoc(doc(db, "users", user.uid), { playerId: newPid });
+    currentProfile = { ...currentProfile, playerId: newPid };
+  }
+
   document.getElementById("signedInAs").textContent = currentProfile.username;
+
+  // Auto-join from QR / pass link: ?tjoin=CODE&pid=PLAYERID
+  const urlParams = new URLSearchParams(window.location.search);
+  const tjoin = urlParams.get("tjoin");
+  if (tjoin) {
+    // Clean URL so back/refresh doesn't re-trigger
+    history.replaceState({}, "", window.location.pathname);
+    showRoom();
+    hideLoading();
+    await joinTournamentByCode(tjoin);
+    return;
+  }
+
   showRoom();
   hideLoading();
 });
@@ -1480,6 +1524,7 @@
             username,
             usernameKey: key,
             email,
+            playerId: generatePlayerId(),
             createdAt: serverTimestamp()
           });
         });
@@ -1560,6 +1605,7 @@
           usernameKey: key,
           email: user.email || "",
           provider: "google",
+          playerId: generatePlayerId(),
           createdAt: serverTimestamp()
         });
       });
@@ -3283,6 +3329,13 @@ showRoom();
       return code;
     }
 
+    function generatePlayerId() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let id = "";
+      for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
+      return id;
+    }
+
     async function createTournament() {
       if (!currentUser || !currentProfile) { alert("Not logged in."); return; }
       try {
@@ -3304,6 +3357,37 @@ showRoom();
       }
     }
 
+    async function joinTournamentByCode(code) {
+      if (!currentUser || !currentProfile) return;
+      code = code.toUpperCase();
+      try {
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(doc(db, "tournaments", code));
+          if (!snap.exists()) throw new Error("Tournament not found.");
+          const d = snap.data();
+          if (d.hostUid === currentUser.uid) throw new Error("You are the host — no need to join.");
+          if (d.status !== "lobby") throw new Error("This tournament has already started.");
+          if ((d.players || []).length >= 4) throw new Error("Tournament is full (4/4).");
+          if ((d.players || []).some(p => p.uid === currentUser.uid)) {
+            // Already in — just subscribe
+            tournamentId = code;
+            subscribeTournament(code);
+            return;
+          }
+          const players = [...(d.players || []), {
+            uid: currentUser.uid, username: currentProfile.username,
+            color: pickAvailableColor(d.players || [], "#1971c2"),
+            playerId: currentProfile.playerId || generatePlayerId(),
+            ratings: [], phaseNumbers: [], gamesWon: 0, totalPoints: 0,
+            status: "waiting", currentRoomCode: null
+          }];
+          tx.update(doc(db, "tournaments", code), { players, updatedAt: serverTimestamp() });
+        });
+        tournamentId = code;
+        subscribeTournament(code);
+      } catch(e) { alert("Could not join tournament: " + e.message); }
+    }
+
     async function joinTournament() {
       if (!currentUser || !currentProfile) { alert("Not logged in."); return; }
       const code = document.getElementById("tJoinCode").value.trim().toUpperCase();
@@ -3321,6 +3405,7 @@ showRoom();
           const players = [...(d.players || []), {
             uid: currentUser.uid, username: currentProfile.username,
             color: pickAvailableColor(d.players || [], color),
+            playerId: currentProfile.playerId || generatePlayerId(),
             ratings: [], phaseNumbers: [], gamesWon: 0, totalPoints: 0,
             status: "waiting", currentRoomCode: null
           }];
@@ -3382,9 +3467,19 @@ showRoom();
       (tournament.players || []).forEach(p => {
         const d = document.createElement("div");
         d.className = "t-lobby-player";
-        d.innerHTML = `<span class="t-color-dot" style="background:${p.color}"></span><span>${p.username}</span>`;
+        d.innerHTML = `
+          <span class="t-color-dot" style="background:${p.color}"></span>
+          <span style="flex:1">${p.username}</span>
+          ${p.playerId ? `<span class="t-pid-chip">${p.playerId}</span>` : ""}
+          <button class="t-pass-btn" onclick="openPlayerPass(${JSON.stringify(p)})">Pass</button>`;
         el.appendChild(d);
       });
+    }
+
+    function openPlayerPass(p) {
+      const base = window.location.origin + "/login/pass/";
+      const url = `${base}?code=${encodeURIComponent(tournament.code)}&pid=${encodeURIComponent(p.playerId || "")}&name=${encodeURIComponent(p.username)}`;
+      window.open(url, "_blank");
     }
 
     function renderHostDashboard() {
