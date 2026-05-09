@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crown Rush – Tournament Player Pass</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple:  #7c3aed;
+      --purple2: #6d28d9;
+      --gold:    #f59e0b;
+      --text:    #e2e8f0;
+      --muted:   #94a3b8;
+      --card:    rgba(255,255,255,.06);
+      --border:  rgba(255,255,255,.12);
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #0a0718;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+      gap: 20px;
+      color: var(--text);
+    }
+
+    /* ── Top controls (hidden in print) ── */
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      padding: 10px 22px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: var(--purple); color: #fff; }
+    .btn-secondary { background: rgba(255,255,255,.1); color: var(--text); border: 1px solid var(--border); }
+
+    .hint {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+      text-align: center;
+      max-width: 480px;
+    }
+
+    /* ── Pass card ── */
+    .pass {
+      width: 420px;
+      max-width: 100%;
+      background: linear-gradient(145deg, #13093a 0%, #1a0f4a 60%, #0e1a3a 100%);
+      border: 1.5px solid rgba(167,139,250,.35);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(167,139,250,.1), 0 20px 60px rgba(0,0,0,.6);
+      position: relative;
+    }
+
+    /* Decorative top stripe */
+    .pass-stripe {
+      height: 8px;
+      background: linear-gradient(90deg, #7c3aed, #a78bfa, #f59e0b, #a78bfa, #7c3aed);
+    }
+
+    /* Header */
+    .pass-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pass-logo {
+      font-family: 'Fredoka One', cursive;
+      font-size: 28px;
+      color: var(--gold);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .pass-title-block { flex: 1; }
+
+    .pass-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 18px;
+      color: var(--text);
+      letter-spacing: .03em;
+    }
+
+    .pass-subtitle {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .pass-tournament-code {
+      font-family: 'Fredoka One', cursive;
+      font-size: 15px;
+      color: var(--gold);
+      letter-spacing: .1em;
+      flex-shrink: 0;
+      text-align: right;
+    }
+    .pass-tournament-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      text-align: right;
+    }
+
+    /* Body */
+    .pass-body {
+      display: flex;
+      gap: 0;
+    }
+
+    /* Left column: fields */
+    .pass-fields {
+      flex: 1;
+      padding: 18px 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .pass-field { display: flex; flex-direction: column; gap: 3px; }
+
+    .pass-field-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .pass-field-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+      min-height: 26px;
+      border-bottom: 1.5px solid rgba(167,139,250,.25);
+      padding-bottom: 2px;
+      outline: none;
+      background: transparent;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    [contenteditable="true"]:focus {
+      border-bottom-color: var(--purple);
+    }
+
+    [contenteditable="true"]::after {
+      content: " ✏";
+      font-size: 11px;
+      opacity: .45;
+    }
+    [contenteditable="true"]:focus::after { display: none; }
+
+    .pass-field-value.id-value {
+      font-family: 'Fredoka One', cursive;
+      font-size: 22px;
+      color: var(--gold);
+      letter-spacing: .12em;
+      border-bottom: none;
+    }
+
+    /* Right column: QR */
+    .pass-qr-col {
+      padding: 18px 20px 20px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .qr-wrap {
+      background: #fff;
+      border-radius: 10px;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #qrCanvas { display: block; border-radius: 4px; }
+
+    .qr-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    /* Footer */
+    .pass-footer {
+      border-top: 1px solid var(--border);
+      padding: 12px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .pass-url-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .pass-url {
+      font-size: 12px;
+      font-weight: 700;
+      color: #a78bfa;
+      word-break: break-all;
+    }
+
+    /* Bottom stripe */
+    .pass-stripe-bottom {
+      height: 5px;
+      background: linear-gradient(90deg, #f59e0b, #a78bfa, #7c3aed, #a78bfa, #f59e0b);
+      opacity: .6;
+    }
+
+    /* ── Print styles ── */
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+        gap: 0;
+      }
+
+      .controls, .hint { display: none !important; }
+
+      .pass {
+        width: 100%;
+        max-width: 480px;
+        box-shadow: none;
+        border-color: #ccc;
+        background: #fff;
+        color: #000;
+        border-radius: 12px;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .pass-stripe, .pass-stripe-bottom { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      .pass-field-value {
+        color: #111;
+        border-bottom-color: #bbb;
+      }
+
+      .pass-field-value.id-value { color: #5b21b6; }
+      .pass-tournament-code { color: #92400e; }
+      .pass-logo { color: #92400e; }
+      .pass-title { color: #111; }
+      .pass-subtitle { color: #666; }
+      .pass-url { color: #5b21b6; }
+      .pass-url-label, .qr-label, .pass-field-label, .pass-tournament-label { color: #666; }
+
+      .qr-wrap { background: #fff; border: 1px solid #ddd; }
+
+      [contenteditable="true"]::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="controls">
+    <button class="btn btn-primary" onclick="window.print()">🖨 Print / Save as PDF</button>
+    <button class="btn btn-secondary" onclick="regenerateQR()">↺ Refresh QR</button>
+  </div>
+
+  <p class="hint">
+    Edit the fields on the pass directly — click any editable line to type.<br>
+    When done, print and save as PDF, then send via your email.
+  </p>
+
+  <div class="pass" id="pass">
+    <div class="pass-stripe"></div>
+
+    <div class="pass-header">
+      <div class="pass-logo">👑</div>
+      <div class="pass-title-block">
+        <div class="pass-title">Crown Rush</div>
+        <div class="pass-subtitle">Tournament Player Pass</div>
+      </div>
+      <div>
+        <div class="pass-tournament-label">Tournament Code</div>
+        <div class="pass-tournament-code" id="dispCode">—</div>
+      </div>
+    </div>
+
+    <div class="pass-body">
+      <div class="pass-fields">
+
+        <div class="pass-field">
+          <div class="pass-field-label">Player Name</div>
+          <div class="pass-field-value" contenteditable="true" id="fieldName" spellcheck="false">Player Name</div>
+        </div>
+
+        <div class="pass-field">
+          <div class="pass-field-label">Date of Birth</div>
+          <div class="pass-field-value" contenteditable="true" id="fieldDOB" spellcheck="false">MM / DD / YYYY</div>
+        </div>
+
+        <div class="pass-field">
+          <div class="pass-field-label">Notes</div>
+          <div class="pass-field-value" contenteditable="true" id="fieldNotes" spellcheck="false"></div>
+        </div>
+
+        <div class="pass-field">
+          <div class="pass-field-label">Player ID</div>
+          <div class="pass-field-value id-value" id="fieldPID">—</div>
+        </div>
+
+      </div>
+
+      <div class="pass-qr-col">
+        <div class="qr-wrap">
+          <canvas id="qrCanvas"></canvas>
+        </div>
+        <div class="qr-label">Scan to join</div>
+      </div>
+    </div>
+
+    <div class="pass-footer">
+      <div class="pass-url-label">Or type this link</div>
+      <div class="pass-url" id="dispURL">—</div>
+    </div>
+
+    <div class="pass-stripe-bottom"></div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code   = (params.get("code") || "").toUpperCase();
+    const pid    = (params.get("pid")  || "").toUpperCase();
+    const name   = params.get("name")  || "";
+
+    // Construct join URL using the same origin (works on any host)
+    const joinURL = `${window.location.origin}/login/?tjoin=${code}&pid=${pid}`;
+
+    // Populate static fields
+    document.getElementById("dispCode").textContent  = code || "—";
+    document.getElementById("fieldPID").textContent  = pid  || "—";
+    document.getElementById("dispURL").textContent   = joinURL;
+    if (name) document.getElementById("fieldName").textContent = name;
+
+    function regenerateQR() {
+      QRCode.toCanvas(
+        document.getElementById("qrCanvas"),
+        joinURL,
+        { width: 148, margin: 1, color: { dark: "#000000", light: "#ffffff" } },
+        function(err) { if (err) console.error(err); }
+      );
+    }
+
+    regenerateQR();
+  </script>
+</body>
+</html>
