@@ -1453,18 +1453,25 @@
   }
 
   currentProfile = profileSnap.data();
+
+  // Backfill Player ID for accounts created before this feature
+  if (!currentProfile.playerId) {
+    const newPid = generatePlayerId();
+    await updateDoc(doc(db, "users", user.uid), { playerId: newPid });
+    currentProfile = { ...currentProfile, playerId: newPid };
+  }
+
   document.getElementById("signedInAs").textContent = currentProfile.username;
 
   // Auto-join from QR / pass link: ?tjoin=CODE&pid=PLAYERID
   const urlParams = new URLSearchParams(window.location.search);
   const tjoin = urlParams.get("tjoin");
   if (tjoin) {
-    const pid = urlParams.get("pid") || "";
     // Clean URL so back/refresh doesn't re-trigger
     history.replaceState({}, "", window.location.pathname);
     showRoom();
     hideLoading();
-    await joinTournamentByCode(tjoin, pid);
+    await joinTournamentByCode(tjoin);
     return;
   }
 
@@ -1517,6 +1524,7 @@
             username,
             usernameKey: key,
             email,
+            playerId: generatePlayerId(),
             createdAt: serverTimestamp()
           });
         });
@@ -1597,6 +1605,7 @@
           usernameKey: key,
           email: user.email || "",
           provider: "google",
+          playerId: generatePlayerId(),
           createdAt: serverTimestamp()
         });
       });
@@ -3348,7 +3357,7 @@ showRoom();
       }
     }
 
-    async function joinTournamentByCode(code, preferredPid) {
+    async function joinTournamentByCode(code) {
       if (!currentUser || !currentProfile) return;
       code = code.toUpperCase();
       try {
@@ -3365,11 +3374,10 @@ showRoom();
             subscribeTournament(code);
             return;
           }
-          const playerId = preferredPid && preferredPid.length === 8 ? preferredPid : generatePlayerId();
           const players = [...(d.players || []), {
             uid: currentUser.uid, username: currentProfile.username,
             color: pickAvailableColor(d.players || [], "#1971c2"),
-            playerId,
+            playerId: currentProfile.playerId || generatePlayerId(),
             ratings: [], phaseNumbers: [], gamesWon: 0, totalPoints: 0,
             status: "waiting", currentRoomCode: null
           }];
@@ -3394,12 +3402,10 @@ showRoom();
           if ((d.players || []).length >= 4) throw new Error("Tournament is full (4/4).");
           if ((d.players || []).some(p => p.uid === currentUser.uid)) throw new Error("Already joined.");
           const color = document.getElementById("tJoinColor").value;
-          const existingEntry = (d.players || []).find(p => p.uid === currentUser.uid);
-          const playerId = existingEntry?.playerId || generatePlayerId();
           const players = [...(d.players || []), {
             uid: currentUser.uid, username: currentProfile.username,
             color: pickAvailableColor(d.players || [], color),
-            playerId,
+            playerId: currentProfile.playerId || generatePlayerId(),
             ratings: [], phaseNumbers: [], gamesWon: 0, totalPoints: 0,
             status: "waiting", currentRoomCode: null
           }];
