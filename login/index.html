@@ -3115,21 +3115,24 @@ showRoom();
     }
 
     async function createTournament() {
-      if (!currentUser || !currentProfile) return;
-      const color = document.getElementById("tCreateColor").value;
-      let code = generateTournamentCode();
-      for (let i = 0; i < 10; i++) {
-        if (!(await getDoc(doc(db, "tournaments", code))).exists()) break;
-        code = generateTournamentCode();
+      if (!currentUser || !currentProfile) { alert("Not logged in."); return; }
+      try {
+        let code = generateTournamentCode();
+        for (let i = 0; i < 10; i++) {
+          if (!(await getDoc(doc(db, "tournaments", code))).exists()) break;
+          code = generateTournamentCode();
+        }
+        await setDoc(doc(db, "tournaments", code), {
+          code, hostUid: currentUser.uid, hostUsername: currentProfile.username,
+          status: "lobby", currentPhase: 0, phasesComplete: [],
+          players: [], games: [],
+          createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+        });
+        tournamentId = code;
+        subscribeTournament(code);
+      } catch(e) {
+        alert("Could not create tournament: " + e.message);
       }
-      await setDoc(doc(db, "tournaments", code), {
-        code, hostUid: currentUser.uid, hostUsername: currentProfile.username,
-        status: "lobby", currentPhase: 0, phasesComplete: [],
-        players: [], games: [],
-        createdAt: serverTimestamp(), updatedAt: serverTimestamp()
-      });
-      tournamentId = code;
-      subscribeTournament(code);
     }
 
     async function joinTournament() {
