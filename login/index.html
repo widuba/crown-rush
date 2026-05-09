@@ -3439,7 +3439,11 @@ showRoom();
           if (d.hostUid === currentUser.uid) throw new Error("Hosts cannot join as a player.");
           if (d.status !== "lobby") throw new Error("This tournament has already started.");
           if ((d.players || []).length >= 4) throw new Error("Tournament is full (4/4).");
-          if ((d.players || []).some(p => p.uid === currentUser.uid)) throw new Error("Already joined.");
+          if ((d.players || []).some(p => p.uid === currentUser.uid)) {
+            tournamentId = code;
+            subscribeTournament(code);
+            return;
+          }
           const color = document.getElementById("tJoinColor").value;
           const players = [...(d.players || []), {
             uid: currentUser.uid, username: currentProfile.username,
