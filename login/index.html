@@ -1177,6 +1177,7 @@
               <span>Pick a color</span>
             </div>
             <button onclick="joinTournament()" style="width:100%;margin-top:4px;">Join Tournament</button>
+            <div id="tJoinStatus" style="font-size:13px;font-weight:700;min-height:18px;text-align:center;"></div>
           </div>
         </div>
       </div>
@@ -3428,35 +3429,38 @@ showRoom();
     }
 
     async function joinTournament() {
-      if (!currentUser || !currentProfile) { alert("Not logged in."); return; }
+      const statusEl = document.getElementById("tJoinStatus");
+      statusEl.innerHTML = "";
+      if (!currentUser || !currentProfile) { statusEl.style.color = "#f87171"; statusEl.textContent = "Not logged in."; return; }
       const code = document.getElementById("tJoinCode").value.trim().toUpperCase();
-      if (code.length !== 8) { alert("Tournament code must be exactly 8 letters."); return; }
+      if (code.length !== 8) { statusEl.style.color = "#f87171"; statusEl.textContent = "Code must be exactly 8 letters."; return; }
+      let notAdded = false;
       try {
         await runTransaction(db, async (tx) => {
           const snap = await tx.get(doc(db, "tournaments", code));
           if (!snap.exists()) throw new Error("Tournament not found.");
           const d = snap.data();
-          if (d.hostUid === currentUser.uid) throw new Error("Hosts cannot join as a player.");
+          if (d.hostUid === currentUser.uid) throw new Error("You are the host — no need to join.");
           if (d.status !== "lobby") throw new Error("This tournament has already started.");
-          if ((d.players || []).length >= 4) throw new Error("Tournament is full (4/4).");
           if ((d.players || []).some(p => p.uid === currentUser.uid)) {
             tournamentId = code;
             subscribeTournament(code);
             return;
           }
-          const color = document.getElementById("tJoinColor").value;
-          const players = [...(d.players || []), {
-            uid: currentUser.uid, username: currentProfile.username,
-            color: pickAvailableColor(d.players || [], color),
-            playerId: currentProfile.playerId || generatePlayerId(),
-            ratings: [], phaseNumbers: [], gamesWon: 0, totalPoints: 0,
-            status: "waiting", currentRoomCode: null
-          }];
-          tx.update(doc(db, "tournaments", code), { players, updatedAt: serverTimestamp() });
+          notAdded = true;
+          throw new Error("not-added");
         });
         tournamentId = code;
         subscribeTournament(code);
-      } catch(e) { alert("Could not join tournament: " + e.message); }
+      } catch(e) {
+        if (notAdded) {
+          statusEl.style.color = "#f87171";
+          statusEl.innerHTML = `Not added yet. Get your pass at <a href="/login/pass/" style="color:#a78bfa;">crownrush.app/pass</a> and ask your host to scan it.`;
+        } else {
+          statusEl.style.color = "#f87171";
+          statusEl.textContent = e.message;
+        }
+      }
     }
 
     function subscribeTournament(code) {
