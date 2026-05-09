@@ -1458,6 +1458,7 @@
   if (!currentProfile.playerId) {
     const newPid = generatePlayerId();
     await updateDoc(doc(db, "users", user.uid), { playerId: newPid });
+    await setDoc(doc(db, "playerIds", newPid), { username: currentProfile.username, uid: user.uid });
     currentProfile = { ...currentProfile, playerId: newPid };
   }
 
@@ -1506,6 +1507,7 @@
         });
 
         const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const newPid = generatePlayerId();
 
         await runTransaction(db, async (tx) => {
           const freshSnap = await tx.get(usernameRef);
@@ -1524,9 +1526,11 @@
             username,
             usernameKey: key,
             email,
-            playerId: generatePlayerId(),
+            playerId: newPid,
             createdAt: serverTimestamp()
           });
+
+          tx.set(doc(db, "playerIds", newPid), { username, uid: cred.user.uid });
         });
 
         currentProfile = {
@@ -1586,6 +1590,8 @@
       const key = usernameKey(username);
       const usernameRef = doc(db, "usernames", key);
 
+      const newPid = generatePlayerId();
+
       await runTransaction(db, async (tx) => {
         const usernameSnap = await tx.get(usernameRef);
 
@@ -1605,9 +1611,11 @@
           usernameKey: key,
           email: user.email || "",
           provider: "google",
-          playerId: generatePlayerId(),
+          playerId: newPid,
           createdAt: serverTimestamp()
         });
+
+        tx.set(doc(db, "playerIds", newPid), { username, uid: user.uid });
       });
 
       currentProfile = {
