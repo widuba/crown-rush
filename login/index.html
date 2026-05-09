@@ -1217,6 +1217,7 @@
         </div>
 
         <button id="backToRoomBtn" onclick="backToRoom()" style="display:none;margin-top:4px;">Back to Room</button>
+        <button id="leaveGameBtn" onclick="confirmLeaveGame()" style="display:none;margin-top:4px;" class="secondary danger">Leave Game</button>
       </div>
 
     </section>
@@ -1295,7 +1296,9 @@
     let tournament = null;
     let unsubTournament = null;
     let advancingPhase = false;
+    let heartbeatInterval = null;
     const reportedRooms = new Set();
+    const knownLeftUids = new Set();
 
     window.signUp = signUp;
     window.login = login;
@@ -1320,6 +1323,7 @@
     window.selectGameType = selectGameType;
     window.selectDifficulty = selectDifficulty;
     window.leaveRoom = leaveRoom;
+    window.confirmLeaveGame = confirmLeaveGame;
 
     updateGameTypeOptions();
 
@@ -1579,6 +1583,7 @@ showRoom();
 }
 
     async function logout() {
+      stopHeartbeat();
       if (unsubRoom) unsubRoom();
       unsubRoom = null;
       roomId = null;
@@ -1586,30 +1591,44 @@ showRoom();
       await signOut(auth);
     }
 
+    async function confirmLeaveGame() {
+      if (!confirm("Leave the game? You will be removed from the board and the others will continue without you.")) return;
+      await leaveRoom();
+    }
+
     async function leaveRoom() {
       if (!roomId || !currentUser) return;
-
+      stopHeartbeat();
       const ref = doc(db, "games", roomId);
       try {
         await runTransaction(db, async (tx) => {
           const snap = await tx.get(ref);
           if (!snap.exists()) return;
           const data = snap.data();
-          if (data.status !== "lobby") return;
 
-          const remaining = (data.players || [])
-            .filter(p => p.uid !== currentUser.uid)
-            .map((p, i) => ({ ...p, id: i }));
-
-          const humanRemaining = remaining.filter(p => !p.isAI);
-          if (humanRemaining.length === 0) {
-            tx.delete(ref);
-          } else {
-            tx.update(ref, {
-              players: remaining,
-              hostUid: data.hostUid === currentUser.uid ? humanRemaining[0].uid : data.hostUid,
-              updatedAt: serverTimestamp()
-            });
+          if (data.status === "lobby") {
+            const remaining = (data.players || [])
+              .filter(p => p.uid !== currentUser.uid)
+              .map((p, i) => ({ ...p, id: i }));
+            const humanRemaining = remaining.filter(p => !p.isAI);
+            if (humanRemaining.length === 0) {
+              tx.delete(ref);
+            } else {
+              tx.update(ref, {
+                players: remaining,
+                hostUid: data.hostUid === currentUser.uid ? humanRemaining[0].uid : data.hostUid,
+                updatedAt: serverTimestamp()
+              });
+            }
+          } else if (data.status === "playing") {
+            const next = clone(data);
+            const leavingPlayer = next.players.find(p => p.uid === currentUser.uid);
+            if (!leavingPlayer || leavingPlayer.left) return;
+            leavingPlayer.left = true;
+            leavingPlayer.eliminated = true;
+            if (next.currentPlayer === leavingPlayer.id) advanceTurnSkipLeft(next);
+            checkAndEndIfOneLeft(next);
+            tx.update(ref, stripServerTimestamp(next));
           }
         });
       } catch (_) {}
@@ -1618,8 +1637,80 @@ showRoom();
       unsubRoom = null;
       roomId = null;
       state = null;
+      knownLeftUids.clear();
       document.getElementById("roomCard").classList.remove("in-lobby");
       showRoom();
+    }
+
+    function startHeartbeat() {
+      stopHeartbeat();
+      if (!roomId || !currentUser) return;
+      const ping = () => {
+        if (!roomId || !currentUser) { stopHeartbeat(); return; }
+        updateDoc(doc(db, "games", roomId), {
+          [`pings.${currentUser.uid}`]: serverTimestamp()
+        }).catch(() => {});
+      };
+      ping();
+      heartbeatInterval = setInterval(ping, 28000);
+    }
+
+    function stopHeartbeat() {
+      if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
+    }
+
+    function advanceTurnSkipLeft(s) {
+      let guard = 0;
+      while (s.players[s.currentPlayer]?.eliminated && guard < s.players.length) {
+        s.currentPlayer++;
+        if (s.currentPlayer >= s.players.length) {
+          s.currentPlayer = 0;
+          s.fullRoundNumber++;
+        }
+        guard++;
+      }
+    }
+
+    function checkAndEndIfOneLeft(s) {
+      if (s.status === "ended") return;
+      const alive = s.players.filter(p => !p.eliminated && !p.isAI);
+      if (alive.length === 1) {
+        endGameInState(s, alive[0], `${alive[0].username} wins — others left the game.`);
+      } else if (alive.length === 0) {
+        s.status = "ended"; s.finalWinnerId = null;
+        s.gameOverReason = "All players left the game.";
+      }
+    }
+
+    async function checkStalePlayers(s) {
+      if (!s || s.status !== "playing" || currentUser?.uid !== s.hostUid) return;
+      const pings = s.pings || {};
+      const now = Date.now();
+      const STALE_MS = 90000;
+      let dirty = false;
+      const next = clone(s);
+      for (const p of next.players) {
+        if (p.isAI || p.left || p.eliminated) continue;
+        const ping = pings[p.uid];
+        if (!ping) continue;
+        const pingTime = ping.toMillis ? ping.toMillis() : (typeof ping === "number" ? ping : 0);
+        if (pingTime > 0 && now - pingTime > STALE_MS) {
+          p.left = true; p.eliminated = true; dirty = true;
+        }
+      }
+      if (!dirty) return;
+      if (next.players[next.currentPlayer]?.eliminated) advanceTurnSkipLeft(next);
+      checkAndEndIfOneLeft(next);
+      await saveState(next);
+    }
+
+    function showLeaveNotification(username) {
+      const info = document.getElementById("info");
+      if (!info) return;
+      const prev = info.textContent;
+      info.textContent = `${username} left the game`;
+      info.style.color = "#f87171";
+      setTimeout(() => { info.style.color = ""; if (state) render(); else info.textContent = prev; }, 3000);
     }
 
     function setAuthMessage(text) {
@@ -1846,10 +1937,13 @@ showRoom();
 
     function subscribeRoom(code) {
       if (unsubRoom) unsubRoom();
+      stopHeartbeat();
+      knownLeftUids.clear();
 
       roomId = code;
       document.getElementById("roomCodeDisplay").textContent = code;
       document.getElementById("roomCard").classList.add("in-lobby");
+      startHeartbeat();
 
       unsubRoom = onSnapshot(doc(db, "games", code), (snap) => {
         if (!snap.exists()) {
@@ -1858,6 +1952,14 @@ showRoom();
         }
 
         state = snap.data();
+
+        // Detect newly-left players and notify
+        (state.players || []).filter(p => p.left && !p.isAI).forEach(p => {
+          if (!knownLeftUids.has(p.uid)) {
+            knownLeftUids.add(p.uid);
+            if (p.uid !== currentUser?.uid) showLeaveNotification(p.username);
+          }
+        });
 
         if (state.status === "playing" || state.status === "ended") {
           showGame();
@@ -1874,6 +1976,8 @@ showRoom();
             clearTimeout(aiMoveTimer);
             aiMoveTimer = null;
           }
+          // Check for stale (disconnected) players — host only
+          checkStalePlayers(state);
           // Tournament result reporting — idempotent via Firestore transaction
           if (state.status === "ended" && state.tournamentCode && !reportedRooms.has(code)) {
             reportedRooms.add(code);
@@ -2116,16 +2220,22 @@ showRoom();
       renderScores();
       renderBoard();
 
+      const leaveBtn = document.getElementById("leaveGameBtn");
+      const btrBtn = document.getElementById("backToRoomBtn");
+
       if (state.status === "playing") {
         const current = state.players[state.currentPlayer];
         const gasText = state.twoPlayerMode && state.gasActive ? ` | Gas round ${state.gasRound}` : "";
         const turnText = isMyTurn() ? "YOUR TURN" : `${current.username}'s turn`;
-
         document.getElementById("info").textContent =
           `${turnText} | Round ${state.fullRoundNumber}${gasText}`;
+        // Show leave button only if the local player is still in the game
+        const me = state.players.find(p => p.uid === currentUser?.uid);
+        leaveBtn.style.display = (me && !me.left) ? "block" : "none";
+        btrBtn.style.display = "none";
       } else if (state.status === "ended") {
         document.getElementById("info").textContent = "Game over. Hide final screen to inspect the board.";
-        const btrBtn = document.getElementById("backToRoomBtn");
+        leaveBtn.style.display = "none";
         btrBtn.textContent = tournamentId ? "Back to Tournament" : "Back to Room";
         btrBtn.style.display = "block";
         showGameOver();
@@ -2152,8 +2262,14 @@ showRoom();
         const div = document.createElement("div");
         div.className = "score";
         div.style.background = player.color;
-        div.textContent =
-          `${player.username}: ${player.points} pts | Towers: ${countOwnedTowersIn(state, player.id)}${player.infected ? " | Infected" : ""}${player.eliminated ? " | OUT" : ""}`;
+        if (player.left) {
+          div.style.opacity = "0.4";
+          div.style.textDecoration = "line-through";
+          div.textContent = `${player.username}: left`;
+        } else {
+          div.textContent =
+            `${player.username}: ${player.points} pts | Towers: ${countOwnedTowersIn(state, player.id)}${player.infected ? " | Infected" : ""}${player.eliminated ? " | OUT" : ""}`;
+        }
         scores.appendChild(div);
       });
     }
@@ -3066,11 +3182,11 @@ showRoom();
     }
 
     function backToRoom() {
+      stopHeartbeat();
       document.getElementById("gameOver").style.display = "none";
       if (tournamentId) {
         if (unsubRoom) { unsubRoom(); unsubRoom = null; }
-        roomId = null;
-        state = null;
+        roomId = null; state = null; knownLeftUids.clear();
         showTournamentView();
       } else {
         showRoom();
@@ -3701,6 +3817,21 @@ showRoom();
         status: "finished", updatedAt: serverTimestamp()
       });
     }
+
+    // Best-effort leave on tab close / navigation away.
+    // Firebase SDK will try to flush this write from its queue before the page fully unloads.
+    window.addEventListener("pagehide", () => {
+      if (!roomId || !currentUser || !state) return;
+      stopHeartbeat();
+      if (state.status === "playing") {
+        const leavingPlayer = state.players.find(p => p.uid === currentUser.uid);
+        if (!leavingPlayer || leavingPlayer.left) return;
+        const updatedPlayers = state.players.map(p =>
+          p.uid === currentUser.uid ? { ...p, left: true, eliminated: true } : p
+        );
+        updateDoc(doc(db, "games", roomId), { players: updatedPlayers }).catch(() => {});
+      }
+    });
 
     document.addEventListener("keydown", function(event) {
   if (!state || state.status !== "playing" || !isMyTurn()) return;
