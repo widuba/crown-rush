@@ -224,12 +224,12 @@
         <div class="qr-wrap">
           <img id="qrImg" width="148" height="148" alt="QR code" style="display:block;border-radius:4px;" />
         </div>
-        <div class="qr-label">Scan to join</div>
+        <div class="qr-label">Host scans to add</div>
       </div>
     </div>
 
     <div class="pass-footer">
-      <div class="pass-url-label">Or type this link</div>
+      <div class="pass-url-label">Player join link (type to join manually)</div>
       <div class="pass-url" id="dispURL">—</div>
     </div>
 
@@ -269,10 +269,8 @@
       return codeInput.value.toUpperCase().replace(/[^A-Z]/g, "");
     }
 
-    async function updateQR(code) {
-      if (!code) return;
-      const url = `${window.location.origin}/login/?tjoin=${code}`;
-      document.getElementById("dispURL").textContent = url;
+    async function generateQR(pid) {
+      const url = `${window.location.origin}/login/pass/?pid=${pid}`;
       try {
         const dataUrl = await QRCode.toDataURL(url, {
           width: 148, margin: 1,
@@ -280,6 +278,15 @@
         });
         document.getElementById("qrImg").src = dataUrl;
       } catch(e) { console.error("QR error:", e); }
+    }
+
+    function updateJoinLink() {
+      const code = currentCode();
+      const pid  = document.getElementById("fieldPID").textContent.trim();
+      if (code.length === 8 && pid && pid !== "—") {
+        document.getElementById("dispURL").textContent =
+          `${window.location.origin}/login/?tjoin=${code}`;
+      }
     }
 
     async function lookupPlayer(pid) {
@@ -300,6 +307,7 @@
           status.style.color = "#f87171";
           document.getElementById("fieldName").textContent = "—";
           document.getElementById("fieldPID").textContent  = "—";
+          document.getElementById("qrImg").src = "";
           return;
         }
         const { username } = snap.data();
@@ -307,8 +315,8 @@
         document.getElementById("fieldPID").textContent  = pid;
         status.textContent = "✓ Player found";
         status.style.color = "#6ee7b7";
-        const code = currentCode();
-        if (code.length === 8) updateQR(code);
+        await generateQR(pid);
+        updateJoinLink();
       } catch(e) {
         status.textContent = "Lookup failed: " + e.message;
         status.style.color = "#f87171";
@@ -325,8 +333,7 @@
       codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 8);
       const code = codeInput.value;
       document.getElementById("fieldCode").textContent = code || "—";
-      const pid = document.getElementById("fieldPID").textContent.trim();
-      if (code.length === 8 && pid && pid !== "—") updateQR(code);
+      updateJoinLink();
     });
 
     // Pre-fill from URL params when opened via lobby "Pass" button
