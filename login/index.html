@@ -674,6 +674,13 @@
         width: min(92vw, calc(100dvh - 205px), calc(100vh - 205px));
         gap: 3px; padding: 5px;
       }
+
+      /* Tournament mobile */
+      body.view-tournament .htp-link { display: none; }
+      .t-player-cards { grid-template-columns: 1fr; }
+      #tournamentCard { padding: 14px; }
+      .t-games-list { gap: 8px; }
+      .t-game-row { padding: 10px 12px; }
     }
 
     @media (max-width: 380px) {
@@ -788,6 +795,8 @@
     #tournamentCard {
       display: none; flex-direction: column;
       gap: 12px; width: 100%;
+      padding: 20px 22px;
+      box-sizing: border-box;
     }
 
     body.view-tournament .app { justify-content: flex-start; }
@@ -919,6 +928,50 @@
       font-size: 13px; color: var(--muted); font-weight: 700;
       text-align: center; padding: 4px 0;
     }
+
+    .t-games-list {
+      display: flex; flex-direction: column; gap: 10px; margin: 4px 0;
+    }
+
+    .t-game-row {
+      background: var(--card); border: 1px solid var(--card-border);
+      border-radius: var(--r2); padding: 12px 16px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+
+    .t-game-row.done { border-color: rgba(16,185,129,.3); }
+    .t-game-row.playing { border-color: rgba(167,139,250,.3); }
+
+    .t-game-matchup {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      font-size: 14px; font-weight: 800;
+    }
+
+    .t-game-vs { color: var(--muted); font-size: 12px; font-weight: 700; }
+
+    .t-game-meta {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+
+    .t-game-code {
+      font-family: 'Fredoka One', cursive; font-size: 13px;
+      color: var(--gold); letter-spacing: .06em;
+    }
+
+    .t-game-badge {
+      font-size: 11px; font-weight: 800; padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .t-game-badge.done { background: rgba(16,185,129,.18); color: #6ee7b7; }
+    .t-game-badge.playing { background: rgba(167,139,250,.18); color: #c4b5fd; }
+
+    .t-card-stats {
+      font-size: 12px; color: var(--muted); font-weight: 700;
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+
+    .t-card-stats span { color: #e2e8f0; }
 
     .t-info-line {
       font-size: 14px; font-weight: 700; padding: 8px 0;
@@ -1242,6 +1295,7 @@
     let tournamentId = null;
     let tournament = null;
     let unsubTournament = null;
+    let advancingPhase = false;
     const reportedRooms = new Set();
 
     window.signUp = signUp;
@@ -3236,17 +3290,17 @@ showRoom();
       const rankings = getTournamentRankings(tournament.players || []);
       const cardsEl = document.getElementById("tPlayerCards");
       cardsEl.innerHTML = "";
+      const phaseLabelsShort = ["", "R1", "R2", "R3/4", "R5", "R6"];
       rankings.forEach((p, idx) => {
         const avg = p.ratings.length
           ? (p.ratings.reduce((s,r)=>s+r,0)/p.ratings.length).toFixed(1) : "—";
-        const phaseGames = (tournament.games || []).filter(g =>
-          g.playerUids.includes(p.uid) && g.phase === tournament.currentPhase);
-        const activeGame = phaseGames.find(g => g.status !== "done");
-        const statusLabel = p.status === "playing" ? `Playing` :
+        const statusLabel = p.status === "playing" ? "Playing" :
                             p.status === "done" ? "Done ✓" : "Waiting";
-        const chips = (p.ratings || []).map(r =>
-          `<span class="t-rating-chip">${r}</span>`).join("") ||
-          `<span style="color:var(--muted);font-size:12px">No ratings yet</span>`;
+        const chips = (p.ratings || []).map((r, ri) => {
+          const ph = (p.phaseNumbers || [])[ri];
+          const label = ph ? phaseLabelsShort[ph] || `R${ph}` : `R${ri+1}`;
+          return `<span class="t-rating-chip" title="${label}">${label}: ${r}</span>`;
+        }).join("") || `<span style="color:var(--muted);font-size:12px">No ratings yet</span>`;
         const card = document.createElement("div");
         card.className = "t-player-card";
         card.innerHTML = `
@@ -3255,13 +3309,14 @@ showRoom();
             <span class="t-color-dot" style="background:${p.color}"></span>
             <span class="t-card-name">${p.username}</span>
           </div>
-          <div class="t-card-avg">Avg rating: <strong>${avg}</strong></div>
+          <div class="t-card-avg">Avg: <strong>${avg}</strong></div>
+          <div class="t-card-stats">Wins: <span>${p.gamesWon}</span> &nbsp;Pts: <span>${p.totalPoints}</span></div>
           <div class="t-card-status ${p.status}">${statusLabel}</div>
           <div class="t-rating-row">${chips}</div>`;
         cardsEl.appendChild(card);
       });
 
-      // Phase status + next-phase button
+      // Games list for current phase
       const phase = tournament.currentPhase;
       const phaseGames = (tournament.games || []).filter(g => g.phase === phase);
       const doneCount = phaseGames.filter(g => g.status === "done").length;
@@ -3270,15 +3325,33 @@ showRoom();
       const nextBtn = document.getElementById("tNextPhaseBtn");
 
       if (tournament.status === "finished") {
-        statusEl.textContent = "Tournament complete!";
+        statusEl.innerHTML = "";
         nextBtn.style.display = "none";
         document.getElementById("tFinalContent").style.display = "";
         renderFinalResults();
       } else if (phase === 0) {
-        statusEl.textContent = "";
+        statusEl.innerHTML = "";
         nextBtn.style.display = "none";
       } else {
-        statusEl.textContent = `${PHASE_LABELS[phase]}: ${doneCount}/${phaseGames.length} games complete`;
+        // Games list with matchups
+        const playerMap = Object.fromEntries((tournament.players || []).map(p => [p.uid, p]));
+        const gamesHtml = phaseGames.map(g => {
+          const names = g.playerUids.map(uid =>
+            uid === "AI" ? `<span style="color:var(--muted)">CPU</span>` :
+            `<span class="t-color-dot" style="background:${(playerMap[uid]||{}).color||'#888'};display:inline-block;vertical-align:middle;margin-right:3px"></span>${(playerMap[uid]||{}).username||uid}`
+          ).join(`<span class="t-game-vs"> vs </span>`);
+          const badge = g.status === "done"
+            ? `<span class="t-game-badge done">Done ✓</span>`
+            : `<span class="t-game-badge playing">In Progress</span>`;
+          const codeHtml = g.status !== "done"
+            ? `<span class="t-game-code">${g.roomCode}</span>` : "";
+          return `<div class="t-game-row ${g.status}">
+            <div class="t-game-matchup">${names}</div>
+            <div class="t-game-meta">${badge}${codeHtml}</div>
+          </div>`;
+        }).join("");
+        statusEl.innerHTML = `<div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px">${PHASE_LABELS[phase]}: ${doneCount}/${phaseGames.length} games complete</div><div class="t-games-list">${gamesHtml}</div>`;
+
         if (phaseComplete && phase < 5) {
           nextBtn.style.display = "";
           nextBtn.textContent = `▶ Start ${PHASE_LABELS[phase + 1]}`;
@@ -3400,13 +3473,15 @@ showRoom();
     }
 
     async function advanceTournamentPhase() {
-      if (!tournament || tournament.hostUid !== currentUser.uid) return;
+      if (advancingPhase || !tournament || tournament.hostUid !== currentUser.uid) return;
+      advancingPhase = true;
+      try {
       const nextPhase = tournament.currentPhase + 1;
       if (nextPhase > 5) return;
       const rankings = getTournamentRankings(tournament.players);
       let gamesToCreate = [];
       if (nextPhase === 1) {
-        gamesToCreate = rankings.map(p => ({ playerUids: [p.uid, "AI"], playerCount: 2, aiDifficulty: "medium" }));
+        gamesToCreate = rankings.map(p => ({ playerUids: [p.uid, "AI"], playerCount: 2, aiDifficulty: "easy" }));
       } else if (nextPhase === 2) {
         gamesToCreate = [
           { playerUids: [rankings[0].uid, rankings[2].uid], playerCount: 2 },
@@ -3442,6 +3517,7 @@ showRoom();
         games: [...(tournament.games || []), ...newGames],
         players: updatedPlayers, updatedAt: serverTimestamp()
       });
+      } finally { advancingPhase = false; }
     }
 
     async function createTournamentRoom(tCode, phase, playerUids, playerCount, aiDifficulty) {
@@ -3553,7 +3629,6 @@ showRoom();
       const myPlayer = players.find(p => p.uid === playerUid);
       if (!myPlayer) return 0;
       const myId = myPlayer.id;
-      const opponents = players.filter(p => p.id !== myId);
       const playerCount = players.length;
       const isWinner = gameState.finalWinnerId === myId;
 
@@ -3574,29 +3649,20 @@ showRoom();
         speedScore = Math.max(0, 1 - gameState.fullRoundNumber / maxRounds) * 33.33;
       }
 
-      // Factor 2 — Tower dominance: pairwise average (0–33.33)
+      // Factor 2 — Tower dominance: sqrt-normalized vs best player (0–33.33)
       const myTowers = countOwnedTowersIn(gameState, myId);
-      const totalTowers = players.reduce((s, p) => s + countOwnedTowersIn(gameState, p.id), 0);
+      const maxTowers = Math.max(...players.map(p => countOwnedTowersIn(gameState, p.id)));
       let towerScore = 0;
-      if (opponents.length > 0 && totalTowers > 0) {
-        const ratios = opponents.map(opp => {
-          const oppT = countOwnedTowersIn(gameState, opp.id);
-          const sum = myTowers + oppT;
-          return sum === 0 ? 0.5 : myTowers / sum;
-        });
-        towerScore = (ratios.reduce((s,r)=>s+r,0) / ratios.length) * 33.33;
+      if (maxTowers > 0) {
+        towerScore = Math.sqrt(myTowers / maxTowers) * 33.33;
       }
 
-      // Factor 3 — Point dominance: pairwise average (0–33.33)
+      // Factor 3 — Point dominance: sqrt-normalized vs best player (0–33.33)
       const myPts = myPlayer.points;
-      const totalPts = players.reduce((s, p) => s + p.points, 0);
+      const maxPts = Math.max(...players.map(p => p.points));
       let pointScore = 0;
-      if (opponents.length > 0 && totalPts > 0) {
-        const ratios = opponents.map(opp => {
-          const sum = myPts + opp.points;
-          return sum === 0 ? 0.5 : myPts / sum;
-        });
-        pointScore = (ratios.reduce((s,r)=>s+r,0) / ratios.length) * 33.33;
+      if (maxPts > 0 && myPts > 0) {
+        pointScore = Math.sqrt(myPts / maxPts) * 33.33;
       }
 
       const raw = speedScore + towerScore + pointScore;
