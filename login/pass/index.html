@@ -238,21 +238,32 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { initializeApp }                      from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, doc, getDoc }          from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged }        from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-    const db = getFirestore(initializeApp({
+    const app = initializeApp({
       apiKey: "AIzaSyDnLusbSL7Fa-aAceIm3vLE_yRa1R-VajE",
       authDomain: "hidden-towers.firebaseapp.com",
       projectId: "hidden-towers",
       storageBucket: "hidden-towers.firebasestorage.app",
       messagingSenderId: "93909210045",
       appId: "1:93909210045:web:7335ea94fc4a196129f8d4"
-    }));
+    });
+    const db     = getFirestore(app);
+    const auth   = getAuth(app);
 
     const pidInput  = document.getElementById("pidInput");
     const codeInput = document.getElementById("codeInput");
     const status    = document.getElementById("lookupStatus");
+
+    // Resolves once Firebase has confirmed the auth state (logged in or not)
+    let authResolved = false;
+    const authReady = new Promise(resolve => {
+      onAuthStateChanged(auth, user => {
+        if (!authResolved) { authResolved = true; resolve(user); }
+      });
+    });
 
     function currentCode() {
       return codeInput.value.toUpperCase().replace(/[^A-Z]/g, "");
@@ -272,6 +283,14 @@
     async function lookupPlayer(pid) {
       status.textContent = "Looking up…";
       status.style.color = "var(--muted)";
+
+      const user = await authReady;
+      if (!user) {
+        status.textContent = "Sign in on the main page first, then re-open this tab.";
+        status.style.color = "#f87171";
+        return;
+      }
+
       try {
         const snap = await getDoc(doc(db, "playerIds", pid));
         if (!snap.exists()) {
@@ -289,7 +308,7 @@
         const code = currentCode();
         if (code.length === 8) updateQR(code);
       } catch(e) {
-        status.textContent = "Lookup failed — check your connection.";
+        status.textContent = "Lookup failed: " + e.message;
         status.style.color = "#f87171";
       }
     }
