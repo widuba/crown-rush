@@ -3523,50 +3523,67 @@ showRoom();
       overlay.style.display = "flex";
       statusEl.textContent = "Loading scanner…";
 
-      // Dynamically load html5-qrcode if not already loaded
-      if (!window.Html5Qrcode) {
+      if (!window.jsQR) {
         await new Promise((resolve, reject) => {
           const s = document.createElement("script");
-          s.src = "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js";
+          s.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";
           s.onload = resolve; s.onerror = reject;
           document.head.appendChild(s);
         });
       }
 
-      statusEl.textContent = "Point camera at the QR code on the player's pass.";
-      const scanner = new Html5Qrcode("qrScannerRegion");
-      activeScanner = scanner;
+      const region = document.getElementById("qrScannerRegion");
+      region.innerHTML = "";
+      const video = document.createElement("video");
+      video.setAttribute("playsinline", "");
+      video.style.cssText = "width:280px;height:280px;object-fit:cover;border-radius:12px;";
+      region.appendChild(video);
 
+      const canvas = document.createElement("canvas");
+      canvas.width = 280; canvas.height = 280;
+      const ctx = canvas.getContext("2d");
+
+      let stream;
       try {
-        await scanner.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 240, height: 240 } },
-          async (text) => {
-            await closeQRScanner();
-            let pid = text.trim().toUpperCase();
-            // Extract ?pid= from URL if present
-            try { pid = new URL(text).searchParams.get("pid")?.toUpperCase() || pid; } catch(_) {}
-            if (/^[A-Z0-9]{8}$/.test(pid)) {
-              await addPlayerByPid(pid);
-            } else {
-              alert("Could not read a valid Player ID from that QR code.");
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        video.srcObject = stream;
+        await video.play();
+        activeScanner = { stream, video };
+        statusEl.textContent = "Point camera at the QR code on the player's pass.";
+
+        const scan = () => {
+          if (!activeScanner) return;
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            ctx.drawImage(video, 0, 0, 280, 280);
+            const imageData = ctx.getImageData(0, 0, 280, 280);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+            if (code) {
+              closeQRScanner();
+              let pid = code.data.trim().toUpperCase();
+              try { pid = new URL(code.data).searchParams.get("pid")?.toUpperCase() || pid; } catch(_) {}
+              if (/^[A-Z0-9]{8}$/.test(pid)) {
+                addPlayerByPid(pid);
+              } else {
+                alert("Could not read a valid Player ID from that QR code.");
+              }
+              return;
             }
-          },
-          () => {}
-        );
+          }
+          requestAnimationFrame(scan);
+        };
+        requestAnimationFrame(scan);
       } catch(e) {
         statusEl.textContent = "Camera access denied or unavailable.";
       }
     }
 
-    async function closeQRScanner() {
-      const overlay = document.getElementById("qrScannerOverlay");
-      if (activeScanner) {
-        try { await activeScanner.stop(); } catch(_) {}
-        try { activeScanner.clear(); } catch(_) {}
-        activeScanner = null;
+    function closeQRScanner() {
+      if (activeScanner?.stream) {
+        activeScanner.stream.getTracks().forEach(t => t.stop());
       }
-      overlay.style.display = "none";
+      activeScanner = null;
+      document.getElementById("qrScannerOverlay").style.display = "none";
+      document.getElementById("qrScannerRegion").innerHTML = "";
     }
 
     async function addPlayerByPid(pid) {
