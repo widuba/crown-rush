@@ -1184,6 +1184,12 @@
         </div>
       </div>
 
+      <div style="text-align:center;margin-top:8px;">
+        <a href="/pass/" style="text-decoration:none;">
+          <button class="secondary" style="width:100%;padding:10px;">🪪 My Player Pass</button>
+        </a>
+      </div>
+
       <div id="lobbyBox">
         <div class="lobby-label">Room Code</div>
         <div class="room-code" id="roomCodeDisplay"></div>
@@ -3457,7 +3463,7 @@ showRoom();
       } catch(e) {
         if (notAdded) {
           statusEl.style.color = "#f87171";
-          statusEl.innerHTML = `Not added yet. Get your pass at <a href="/login/pass/" style="color:#a78bfa;">hiddentowers.onrender.com/pass</a> and ask your host to scan it.`;
+          statusEl.innerHTML = `Not added yet. Get your pass at <a href="/pass/" style="color:#a78bfa;">hiddentowers.onrender.com/pass</a> and ask your host to scan it.`;
         } else {
           statusEl.style.color = "#f87171";
           statusEl.textContent = e.message;
@@ -3621,7 +3627,7 @@ showRoom();
     }
 
     function openPlayerPass(p) {
-      const base = window.location.origin + "/login/pass/";
+      const base = window.location.origin + "/pass/";
       const url = `${base}?code=${encodeURIComponent(tournament.code)}&pid=${encodeURIComponent(p.playerId || "")}&name=${encodeURIComponent(p.username)}`;
       window.open(url, "_blank");
     }
