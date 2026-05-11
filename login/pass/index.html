@@ -29,7 +29,6 @@
       color: var(--text);
     }
 
-    /* ── Lookup box (hidden in print) ── */
     .lookup-box {
       width: 420px; max-width: 100%;
       background: rgba(255,255,255,.06);
@@ -57,6 +56,10 @@
     }
     .lookup-input:focus { border-color: var(--purple); }
     .lookup-input::placeholder { color: rgba(255,255,255,.2); font-size: 16px; }
+    .lookup-input[readonly] {
+      opacity: .7; cursor: not-allowed;
+      border-color: rgba(255,255,255,.06);
+    }
 
     #lookupStatus { font-size: 13px; font-weight: 800; min-height: 18px; color: var(--muted); }
 
@@ -135,10 +138,28 @@
 
     .pass-stripe-bottom { height: 5px; background: linear-gradient(90deg, #f59e0b, #a78bfa, #7c3aed, #a78bfa, #f59e0b); opacity: .6; }
 
+    /* ── Override section ── */
+    .override-box {
+      width: 420px; max-width: 100%;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 14px 18px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .override-label { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+    .override-input {
+      font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700;
+      background: rgba(0,0,0,.35); border: 2px solid var(--border); border-radius: 10px;
+      color: var(--text); padding: 8px 12px; outline: none; width: 100%;
+      transition: border-color .15s;
+    }
+    .override-input:focus { border-color: var(--purple); }
+    #overrideStatus { font-size: 12px; font-weight: 800; min-height: 16px; }
+
     /* ── Print ── */
     @media print {
       body { background: #fff; padding: 0; gap: 0; }
-      .lookup-box, .controls, .hint { display: none !important; }
+      .lookup-box, .controls, .hint, .override-box { display: none !important; }
       .pass {
         width: 100%; max-width: 480px; box-shadow: none; border-color: #ccc;
         background: #fff; color: #000; border-radius: 12px;
@@ -168,7 +189,7 @@
     </div>
     <div class="lookup-row">
       <div class="lookup-label">Player ID</div>
-      <input id="pidInput" class="lookup-input" placeholder="Enter 8-char Player ID" maxlength="8" />
+      <input id="pidInput" class="lookup-input" placeholder="Loading…" maxlength="8" readonly />
     </div>
     <div id="lookupStatus"></div>
   </div>
@@ -177,7 +198,7 @@
     <button class="btn btn-primary" onclick="window.print()">🖨 Print / Save as PDF</button>
   </div>
 
-  <p class="hint">Type the Player ID above — the name fills in automatically. Edit DOB and notes if needed, then print and send via your email.</p>
+  <p class="hint" id="pageHint">Loading your player pass…</p>
 
   <!-- Pass card -->
   <div class="pass">
@@ -236,11 +257,18 @@
     <div class="pass-stripe-bottom"></div>
   </div>
 
+  <!-- Override section -->
+  <div class="override-box">
+    <div class="override-label">Host Override — Enter Password to Change Player ID</div>
+    <input id="overrideInput" class="override-input" type="password" placeholder="Password" />
+    <div id="overrideStatus"></div>
+  </div>
+
   <script type="module">
-    import { initializeApp }             from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import QRCode                        from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
+    import { initializeApp }                        from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, doc, getDoc }            from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged }          from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import QRCode                                   from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 
     const app = initializeApp({
       apiKey: "AIzaSyDnLusbSL7Fa-aAceIm3vLE_yRa1R-VajE",
@@ -250,14 +278,16 @@
       messagingSenderId: "93909210045",
       appId: "1:93909210045:web:7335ea94fc4a196129f8d4"
     });
-    const db     = getFirestore(app);
-    const auth   = getAuth(app);
+    const db   = getFirestore(app);
+    const auth = getAuth(app);
 
-    const pidInput  = document.getElementById("pidInput");
-    const codeInput = document.getElementById("codeInput");
-    const status    = document.getElementById("lookupStatus");
+    const pidInput      = document.getElementById("pidInput");
+    const codeInput     = document.getElementById("codeInput");
+    const status        = document.getElementById("lookupStatus");
+    const hint          = document.getElementById("pageHint");
+    const overrideInput = document.getElementById("overrideInput");
+    const overrideSt    = document.getElementById("overrideStatus");
 
-    // Resolves once Firebase has confirmed the auth state (logged in or not)
     let authResolved = false;
     const authReady = new Promise(resolve => {
       onAuthStateChanged(auth, user => {
@@ -270,7 +300,7 @@
     }
 
     async function generateQR(pid) {
-      const url = `${window.location.origin}/login/pass/?pid=${pid}`;
+      const url = `${window.location.origin}/pass/?pid=${pid}`;
       try {
         const dataUrl = await QRCode.toDataURL(url, {
           width: 148, margin: 1,
@@ -285,7 +315,7 @@
       const pid  = document.getElementById("fieldPID").textContent.trim();
       if (code.length === 8 && pid && pid !== "—") {
         document.getElementById("dispURL").textContent =
-          `${window.location.origin}/login/?tjoin=${code}`;
+          `${window.location.origin}/?tjoin=${code}`;
       }
     }
 
@@ -323,8 +353,26 @@
       }
     }
 
-    // Input handlers
+    // Override password gate
+    overrideInput.addEventListener("input", () => {
+      if (overrideInput.value === "123456") {
+        pidInput.removeAttribute("readonly");
+        pidInput.style.opacity = "";
+        pidInput.style.cursor = "";
+        pidInput.placeholder = "Enter 8-char Player ID";
+        overrideSt.textContent = "✓ Player ID field unlocked";
+        overrideSt.style.color = "#6ee7b7";
+      } else {
+        pidInput.setAttribute("readonly", "");
+        pidInput.style.opacity = ".7";
+        pidInput.style.cursor = "not-allowed";
+        overrideSt.textContent = "";
+      }
+    });
+
+    // Manual PID input (only active when unlocked)
     pidInput.addEventListener("input", () => {
+      if (pidInput.hasAttribute("readonly")) return;
       pidInput.value = pidInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
       if (pidInput.value.length === 8) lookupPlayer(pidInput.value);
     });
@@ -336,7 +384,7 @@
       updateJoinLink();
     });
 
-    // Pre-fill from URL params when opened via lobby "Pass" button
+    // Pre-fill from URL params (opened via lobby Pass button)
     const params  = new URLSearchParams(window.location.search);
     const preCode = (params.get("code") || "").toUpperCase();
     const prePid  = (params.get("pid")  || "").toUpperCase();
@@ -345,9 +393,36 @@
       codeInput.value = preCode;
       document.getElementById("fieldCode").textContent = preCode;
     }
-    if (prePid) {
+
+    // Autofill from logged-in user's account
+    const user = await authReady;
+    if (!user) {
+      pidInput.placeholder = "Not signed in";
+      hint.textContent = "Sign in on the main page first, then return here.";
+    } else if (prePid) {
+      // Opened with a specific pid param (host-generated link)
       pidInput.value = prePid;
+      hint.textContent = "Edit Date of Birth and Notes if needed, then print or save as PDF.";
       lookupPlayer(prePid);
+    } else {
+      // Autofill from the signed-in user's own Player ID
+      try {
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+        if (userSnap.exists()) {
+          const { playerId } = userSnap.data();
+          if (playerId) {
+            pidInput.value = playerId;
+            hint.textContent = "Your Player ID has been filled in automatically. Edit Date of Birth and Notes if needed, then print or save as PDF.";
+            lookupPlayer(playerId);
+          } else {
+            pidInput.placeholder = "No Player ID yet";
+            hint.textContent = "No Player ID found for your account. Try logging out and back in.";
+          }
+        }
+      } catch(e) {
+        pidInput.placeholder = "Error loading";
+        hint.textContent = "Could not load your Player ID.";
+      }
     }
   </script>
 </body>
