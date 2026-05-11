@@ -322,7 +322,6 @@
     }
 
     .htp-link {
-      position: absolute; left: 50%; transform: translateX(-50%);
       font-size: 13px; font-weight: 800;
       color: var(--purple-light, #a78bfa);
       text-decoration: none;
@@ -338,6 +337,9 @@
       color: #fff;
       border-color: rgba(167,139,250,.6);
     }
+
+    body.view-game .htp-link,
+    body.view-tournament .htp-link { display: none; }
 
     .room-main-title {
       font-family: 'Fredoka One', cursive;
@@ -682,7 +684,6 @@
       }
 
       /* Tournament mobile */
-      body.view-tournament .htp-link { display: none; }
       .t-player-cards { grid-template-columns: 1fr; }
       #tournamentCard { padding: 14px; }
       .t-games-list { gap: 8px; }
@@ -811,7 +812,8 @@
     body.view-tournament #roomCard .menu-grid,
     body.view-tournament #roomCard #lobbyBox,
     body.view-tournament #roomCard .t-menu-section { display: none; }
-    body.view-game #tournamentCard { display: none !important; }
+    body.view-game:not(.view-game-tournament) #tournamentCard { display: none !important; }
+    body.view-game-tournament #tournamentCard { display: flex; }
 
     .t-menu-section {
       display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;
@@ -1826,7 +1828,7 @@ showRoom();
     }
 
     function showGame() {
-      document.body.className = "view-game";
+      document.body.className = tournamentId ? "view-game view-game-tournament" : "view-game";
       document.getElementById("authCard").style.display = "none";
       document.getElementById("roomCard").style.display = "flex";
       document.getElementById("gameArea").style.display = "flex";
@@ -3360,7 +3362,7 @@ showRoom();
     //   TOURNAMENT SYSTEM
     // ═══════════════════════════════════════════════════════
 
-    const PHASE_LABELS = ["", "Round 1: vs AI", "Round 2: 1v1", "Round 3: 3-Player", "Round 4: 4-Player", "Round 5: Finals"];
+    const PHASE_LABELS = ["", "Round 1: vs AI", "Round 2: 1v1", "Round 3: 3-Player", "Round 4: 3-Player", "Round 5: 4-Player", "Round 6: Finals"];
 
     function generateTournamentCode() {
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -3628,8 +3630,8 @@ showRoom();
       // Phase bar
       const pb = document.getElementById("tPhaseBar");
       pb.innerHTML = "";
-      const phaseDisplayLabels = ["1", "2", "3", "4", "5"];
-      [1,2,3,4,5].forEach((ph, i) => {
+      const phaseDisplayLabels = ["1", "2", "3", "4", "5", "6"];
+      [1,2,3,4,5,6].forEach((ph, i) => {
         const done = (tournament.phasesComplete || []).includes(ph);
         const active = tournament.currentPhase === ph;
         const sp = document.createElement("span");
@@ -3642,7 +3644,7 @@ showRoom();
       const rankings = getTournamentRankings(tournament.players || []);
       const cardsEl = document.getElementById("tPlayerCards");
       cardsEl.innerHTML = "";
-      const phaseLabelsShort = ["", "R1", "R2", "R3", "R4", "R5"];
+      const phaseLabelsShort = ["", "R1", "R2", "R3", "R4", "R5", "R6"];
       rankings.forEach((p, idx) => {
         const avg = p.ratings.length
           ? (p.ratings.reduce((s,r)=>s+r,0)/p.ratings.length).toFixed(1) : "—";
@@ -3704,12 +3706,12 @@ showRoom();
         }).join("");
         statusEl.innerHTML = `<div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px">${PHASE_LABELS[phase]}: ${doneCount}/${phaseGames.length} games complete</div><div class="t-games-list">${gamesHtml}</div>`;
 
-        if (phaseComplete && phase < 5) {
+        if (phaseComplete && phase < 6) {
           nextBtn.style.display = "";
           nextBtn.textContent = `▶ Start ${PHASE_LABELS[phase + 1]}`;
         } else {
           nextBtn.style.display = "none";
-          if (phaseComplete && phase === 5 && tournament.status !== "finished") finalizeTournament();
+          if (phaseComplete && phase === 6 && tournament.status !== "finished") finalizeTournament();
         }
       }
     }
@@ -3829,9 +3831,20 @@ showRoom();
       advancingPhase = true;
       try {
       const nextPhase = tournament.currentPhase + 1;
-      if (nextPhase > 5) return;
+      if (nextPhase > 6) return;
+
+      // Live rankings reflect all scores so far
       const rankings = getTournamentRankings(tournament.players);
+
+      // For Round 4, seed from the standings snapshot taken before Round 3 ran
+      const r3seed = (tournament.preRound3Seed || []).map(uid =>
+        tournament.players.find(p => p.uid === uid)
+      ).filter(Boolean);
+      const seedForR4 = r3seed.length === 4 ? r3seed : rankings;
+
       let gamesToCreate = [];
+      let extraUpdate = {};
+
       if (nextPhase === 1) {
         gamesToCreate = rankings.map(p => ({ playerUids: [p.uid, "AI"], playerCount: 2, aiDifficulty: "easy" }));
       } else if (nextPhase === 2) {
@@ -3840,16 +3853,23 @@ showRoom();
           { playerUids: [rankings[1].uid, rankings[3].uid], playerCount: 2 }
         ];
       } else if (nextPhase === 3) {
+        // Snapshot current standings so Round 4 uses pre-Round-3 seeding
+        extraUpdate.preRound3Seed = rankings.map(p => p.uid);
         gamesToCreate = [
-          { playerUids: [rankings[0].uid, rankings[1].uid, rankings[2].uid], playerCount: 3 },
-          { playerUids: [rankings[1].uid, rankings[2].uid, rankings[3].uid], playerCount: 3 }
+          { playerUids: [rankings[0].uid, rankings[1].uid, rankings[2].uid], playerCount: 3 }
         ];
       } else if (nextPhase === 4) {
-        gamesToCreate = [{ playerUids: rankings.map(p => p.uid), playerCount: 4 }];
-      } else if (nextPhase === 5) {
+        // 2nd, 3rd, 4th from pre-Round-3 standings
         gamesToCreate = [
-          { playerUids: [rankings[0].uid, rankings[3].uid], playerCount: 2 },
-          { playerUids: [rankings[1].uid, rankings[2].uid], playerCount: 2 }
+          { playerUids: [seedForR4[1].uid, seedForR4[2].uid, seedForR4[3].uid], playerCount: 3 }
+        ];
+      } else if (nextPhase === 5) {
+        // Rankings now include Rounds 1-4 scores
+        gamesToCreate = [{ playerUids: rankings.map(p => p.uid), playerCount: 4 }];
+      } else if (nextPhase === 6) {
+        gamesToCreate = [
+          { playerUids: [rankings[0].uid, rankings[2].uid], playerCount: 2 },
+          { playerUids: [rankings[1].uid, rankings[3].uid], playerCount: 2 }
         ];
       }
 
@@ -3867,7 +3887,8 @@ showRoom();
       await updateDoc(doc(db, "tournaments", tournament.code), {
         currentPhase: nextPhase, status: "playing",
         games: [...(tournament.games || []), ...newGames],
-        players: updatedPlayers, updatedAt: serverTimestamp()
+        players: updatedPlayers, updatedAt: serverTimestamp(),
+        ...extraUpdate
       });
       } finally { advancingPhase = false; }
     }
@@ -3965,7 +3986,7 @@ showRoom();
           const phasesComplete = phaseComplete
             ? [...new Set([...(tData.phasesComplete || []), tData.currentPhase])]
             : (tData.phasesComplete || []);
-          const finished = tData.currentPhase === 5 && phaseComplete;
+          const finished = tData.currentPhase === 6 && phaseComplete;
 
           tx.update(tRef, {
             games, players, phasesComplete,
