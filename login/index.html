@@ -322,7 +322,6 @@
     }
 
     .htp-link {
-      position: absolute; left: 50%; transform: translateX(-50%);
       font-size: 13px; font-weight: 800;
       color: var(--purple-light, #a78bfa);
       text-decoration: none;
@@ -338,6 +337,9 @@
       color: #fff;
       border-color: rgba(167,139,250,.6);
     }
+
+    body.view-game .htp-link,
+    body.view-tournament .htp-link { display: none; }
 
     .room-main-title {
       font-family: 'Fredoka One', cursive;
@@ -682,7 +684,6 @@
       }
 
       /* Tournament mobile */
-      body.view-tournament .htp-link { display: none; }
       .t-player-cards { grid-template-columns: 1fr; }
       #tournamentCard { padding: 14px; }
       .t-games-list { gap: 8px; }
