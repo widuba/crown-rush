@@ -1184,9 +1184,12 @@
         </div>
       </div>
 
-      <div style="text-align:center;margin-top:8px;">
-        <a href="/pass/" style="text-decoration:none;">
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <a href="/pass/" style="text-decoration:none;flex:1;">
           <button class="secondary" style="width:100%;padding:10px;">🪪 My Player Pass</button>
+        </a>
+        <a href="/leagues/" style="text-decoration:none;flex:1;">
+          <button class="secondary" style="width:100%;padding:10px;">🏅 Leagues</button>
         </a>
       </div>
 
@@ -1317,12 +1320,14 @@
     import {
       getFirestore,
       doc,
+      collection,
       getDoc,
       setDoc,
       updateDoc,
       runTransaction,
       onSnapshot,
-      serverTimestamp
+      serverTimestamp,
+      increment
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     const app = initializeApp(firebaseConfig);
@@ -1343,6 +1348,8 @@
     let advancingPhase = false;
     let heartbeatInterval = null;
     const reportedRooms = new Set();
+    const creditedRooms = new Set();
+    const creditedTournaments = new Set();
     const knownLeftUids = new Set();
 
     window.signUp = signUp;
@@ -1567,6 +1574,7 @@
             usernameKey: key,
             email,
             playerId: newPid,
+            leagueCredits: 0,
             createdAt: serverTimestamp()
           });
 
@@ -1652,6 +1660,7 @@
           email: user.email || "",
           provider: "google",
           playerId: newPid,
+          leagueCredits: 0,
           createdAt: serverTimestamp()
         });
 
@@ -2077,6 +2086,8 @@ showRoom();
             reportedRooms.add(code);
             reportTournamentResult(state);
           }
+          // League credits for this game
+          if (state.status === "ended") awardGameCredits(state);
         } else {
           if (tournamentId) {
             showTournamentView();
@@ -3246,6 +3257,85 @@ showRoom();
       await updateDoc(doc(db, "games", roomId), stripServerTimestamp(reset));
     }
 
+    function calcGameCredits(playerCount, placement) {
+      if (playerCount <= 2) return placement === 1 ? 10 : 5;
+      if (playerCount === 3) return [0, 40, 20, 10][placement] || 0;
+      if (playerCount === 4) return [0, 75, 45, 30, 15][placement] || 0;
+      return 0;
+    }
+
+    function calcTournamentCredits(placement) {
+      return [0, 150, 100, 60, 30][placement] || 0;
+    }
+
+    async function awardGameCredits(s) {
+      if (!currentUser || !currentProfile) return;
+      const key = `${currentUser.uid}_${s.code}`;
+      if (creditedRooms.has(key)) return;
+      creditedRooms.add(key);
+
+      const ranking = getRankingFor(s);
+      const placement = ranking.findIndex(p => p.uid === currentUser.uid) + 1;
+      if (placement < 1) return;
+
+      const credits = calcGameCredits(s.playerCount, placement);
+      if (credits <= 0) return;
+
+      const histRef = doc(db, "leagueHistory", key);
+      const userRef = doc(db, "users", currentUser.uid);
+      try {
+        await runTransaction(db, async (tx) => {
+          const existing = await tx.get(histRef);
+          if (existing.exists()) return;
+          tx.set(histRef, {
+            uid: currentUser.uid,
+            username: currentProfile.username,
+            gameCode: s.code,
+            playerCount: s.playerCount,
+            placement,
+            credits,
+            isTournament: false,
+            createdAt: serverTimestamp()
+          });
+          tx.update(userRef, { leagueCredits: increment(credits) });
+        });
+      } catch(e) { console.error("League credit error:", e); }
+    }
+
+    async function awardTournamentCredits(t) {
+      if (!currentUser || !currentProfile) return;
+      const key = `${currentUser.uid}_t_${t.code}`;
+      if (creditedTournaments.has(key)) return;
+      creditedTournaments.add(key);
+
+      const rankings = getTournamentRankings(t.players || []);
+      const placement = rankings.findIndex(p => p.uid === currentUser.uid) + 1;
+      if (placement < 1) return;
+
+      const credits = calcTournamentCredits(placement);
+      if (credits <= 0) return;
+
+      const histRef = doc(db, "leagueHistory", key);
+      const userRef = doc(db, "users", currentUser.uid);
+      try {
+        await runTransaction(db, async (tx) => {
+          const existing = await tx.get(histRef);
+          if (existing.exists()) return;
+          tx.set(histRef, {
+            uid: currentUser.uid,
+            username: currentProfile.username,
+            gameCode: t.code,
+            playerCount: 4,
+            placement,
+            credits,
+            isTournament: true,
+            createdAt: serverTimestamp()
+          });
+          tx.update(userRef, { leagueCredits: increment(credits) });
+        });
+      } catch(e) { console.error("Tournament league credit error:", e); }
+    }
+
     function showGameOver() {
       const winner = state.players.find(p => p.id === state.finalWinnerId) || getRankingFor(state)[0];
 
@@ -3480,6 +3570,7 @@ showRoom();
         showTournamentView();
         if (currentUser.uid === tournament.hostUid) renderTournamentHost();
         else renderTournamentPlayer();
+        if (tournament.status === "finished") awardTournamentCredits(tournament);
       });
     }
 

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crown Rush – Leagues</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #7c3aed;
+      --gold:   #f59e0b;
+      --text:   #e2e8f0;
+      --muted:  #94a3b8;
+      --border: rgba(255,255,255,.12);
+      --card:   rgba(255,255,255,.06);
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #0a0718;
+      background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,58,237,.25) 0%, transparent 70%);
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding: 28px 16px 48px; gap: 20px;
+      color: var(--text);
+    }
+
+    .top-bar {
+      width: 100%; max-width: 640px;
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .back-btn {
+      font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px;
+      background: rgba(255,255,255,.08); border: 1px solid var(--border);
+      color: var(--text); border-radius: 999px; padding: 7px 16px;
+      cursor: pointer; text-decoration: none; transition: background .15s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,.14); }
+
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(26px, 6vw, 38px);
+      background: linear-gradient(135deg, var(--gold), #f472b6, var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+    }
+
+    /* ── My Credits card ── */
+    .my-card {
+      width: 100%; max-width: 640px;
+      background: linear-gradient(135deg, rgba(124,58,237,.25), rgba(245,158,11,.15));
+      border: 1.5px solid rgba(245,158,11,.35);
+      border-radius: 18px; padding: 20px 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+
+    .my-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), var(--gold));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+
+    .my-info { flex: 1; }
+    .my-name { font-family: 'Fredoka One', cursive; font-size: 20px; color: var(--gold); }
+    .my-sub  { font-size: 13px; color: var(--muted); font-weight: 700; }
+
+    .my-credits {
+      text-align: right;
+    }
+    .my-credits-num {
+      font-family: 'Fredoka One', cursive; font-size: 36px;
+      color: var(--gold); line-height: 1;
+    }
+    .my-credits-label { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+
+    /* ── Section headers ── */
+    .section-title {
+      width: 100%; max-width: 640px;
+      font-family: 'Fredoka One', cursive; font-size: 20px;
+      color: var(--text); padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Leaderboard ── */
+    .leaderboard {
+      width: 100%; max-width: 640px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .lb-row {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 16px;
+      transition: background .15s;
+    }
+    .lb-row.me { border-color: rgba(245,158,11,.4); background: rgba(245,158,11,.08); }
+
+    .lb-rank {
+      font-family: 'Fredoka One', cursive; font-size: 18px;
+      width: 32px; text-align: center; flex-shrink: 0;
+      color: var(--muted);
+    }
+    .lb-rank.gold   { color: #fbbf24; }
+    .lb-rank.silver { color: #94a3b8; }
+    .lb-rank.bronze { color: #b45309; }
+
+    .lb-name { flex: 1; font-size: 15px; font-weight: 800; }
+    .lb-credits {
+      font-family: 'Fredoka One', cursive; font-size: 20px; color: var(--gold);
+    }
+
+    /* ── Credit guide ── */
+    .guide {
+      width: 100%; max-width: 640px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px 20px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .guide-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .guide-box {
+      background: rgba(0,0,0,.2); border-radius: 10px; padding: 10px 12px;
+    }
+
+    .guide-box-title {
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--muted); margin-bottom: 6px;
+    }
+
+    .guide-row {
+      display: flex; justify-content: space-between;
+      font-size: 13px; font-weight: 700; padding: 2px 0;
+    }
+    .guide-row span:last-child { color: var(--gold); font-family: 'Fredoka One', cursive; font-size: 14px; }
+
+    /* ── History ── */
+    .history {
+      width: 100%; max-width: 640px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .hist-row {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 14px;
+    }
+
+    .hist-badge {
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .06em; padding: 3px 8px; border-radius: 999px;
+      flex-shrink: 0;
+    }
+    .hist-badge.tournament { background: rgba(245,158,11,.2); color: #fbbf24; border: 1px solid rgba(245,158,11,.3); }
+    .hist-badge.game-4     { background: rgba(124,58,237,.2); color: #c4b5fd; border: 1px solid rgba(124,58,237,.3); }
+    .hist-badge.game-3     { background: rgba(16,185,129,.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,.3); }
+    .hist-badge.game-2     { background: rgba(59,130,246,.15); color: #93c5fd; border: 1px solid rgba(59,130,246,.3); }
+
+    .hist-place { font-size: 14px; font-weight: 800; flex: 1; }
+    .hist-credits { font-family: 'Fredoka One', cursive; font-size: 18px; color: var(--gold); }
+    .hist-date { font-size: 11px; color: var(--muted); font-weight: 700; }
+
+    .empty { font-size: 14px; color: var(--muted); font-weight: 700; text-align: center; padding: 24px; }
+
+    .loading { font-size: 14px; color: var(--muted); font-weight: 700; text-align: center; padding: 16px; }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <a href="/" class="back-btn">← Home</a>
+    <h1>🏅 Leagues</h1>
+  </div>
+
+  <div class="my-card" id="myCard" style="display:none">
+    <div class="my-avatar">👑</div>
+    <div class="my-info">
+      <div class="my-name" id="myName">—</div>
+      <div class="my-sub" id="myRankLabel">Your standing</div>
+    </div>
+    <div class="my-credits">
+      <div class="my-credits-num" id="myCredits">0</div>
+      <div class="my-credits-label">League Credits</div>
+    </div>
+  </div>
+
+  <div class="section-title">🏆 Leaderboard</div>
+  <div class="leaderboard" id="leaderboard">
+    <div class="loading">Loading…</div>
+  </div>
+
+  <div class="section-title">📋 Credit Guide</div>
+  <div class="guide">
+    <div class="guide-grid">
+      <div class="guide-box">
+        <div class="guide-box-title">AI / 2-Player</div>
+        <div class="guide-row"><span>🥇 Win</span><span>+10</span></div>
+        <div class="guide-row"><span>🥈 Loss</span><span>+5</span></div>
+      </div>
+      <div class="guide-box">
+        <div class="guide-box-title">3-Player</div>
+        <div class="guide-row"><span>🥇 1st</span><span>+40</span></div>
+        <div class="guide-row"><span>🥈 2nd</span><span>+20</span></div>
+        <div class="guide-row"><span>🥉 3rd</span><span>+10</span></div>
+      </div>
+      <div class="guide-box">
+        <div class="guide-box-title">4-Player</div>
+        <div class="guide-row"><span>🥇 1st</span><span>+75</span></div>
+        <div class="guide-row"><span>🥈 2nd</span><span>+45</span></div>
+        <div class="guide-row"><span>🥉 3rd</span><span>+30</span></div>
+        <div class="guide-row"><span>4th</span><span>+15</span></div>
+      </div>
+      <div class="guide-box">
+        <div class="guide-box-title">Tournament</div>
+        <div class="guide-row"><span>🥇 1st</span><span>+150</span></div>
+        <div class="guide-row"><span>🥈 2nd</span><span>+100</span></div>
+        <div class="guide-row"><span>🥉 3rd</span><span>+60</span></div>
+        <div class="guide-row"><span>4th</span><span>+30</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">📜 My Recent Games</div>
+  <div class="history" id="history">
+    <div class="loading">Loading…</div>
+  </div>
+
+  <script type="module">
+    import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      getFirestore, collection, query, where,
+      orderBy, limit, getDocs, doc, getDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const app = initializeApp({
+      apiKey: "AIzaSyDnLusbSL7Fa-aAceIm3vLE_yRa1R-VajE",
+      authDomain: "hidden-towers.firebaseapp.com",
+      projectId: "hidden-towers",
+      storageBucket: "hidden-towers.firebasestorage.app",
+      messagingSenderId: "93909210045",
+      appId: "1:93909210045:web:7335ea94fc4a196129f8d4"
+    });
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    const medals = ["🥇", "🥈", "🥉", "4️⃣"];
+    const ordinal = n => ["", "1st", "2nd", "3rd", "4th"][n] || `${n}th`;
+
+    function formatDate(ts) {
+      if (!ts) return "";
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+
+    function badgeClass(row) {
+      if (row.isTournament) return "tournament";
+      if (row.playerCount >= 4) return "game-4";
+      if (row.playerCount === 3) return "game-3";
+      return "game-2";
+    }
+
+    function badgeLabel(row) {
+      if (row.isTournament) return "Tournament";
+      if (row.playerCount >= 4) return "4-Player";
+      if (row.playerCount === 3) return "3-Player";
+      return row.playerCount <= 1 ? "vs AI" : "2-Player";
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        document.getElementById("myCard").style.display = "none";
+        document.getElementById("leaderboard").innerHTML = `<div class="empty">Sign in to see the leaderboard.</div>`;
+        document.getElementById("history").innerHTML = `<div class="empty">Sign in to see your history.</div>`;
+        return;
+      }
+
+      // Load own profile
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      const profile  = userSnap.exists() ? userSnap.data() : {};
+      const myCredits = profile.leagueCredits || 0;
+
+      document.getElementById("myName").textContent    = profile.username || user.displayName || "You";
+      document.getElementById("myCredits").textContent = myCredits;
+      document.getElementById("myCard").style.display  = "";
+
+      // Leaderboard — fetch all users sorted by leagueCredits
+      const lbEl = document.getElementById("leaderboard");
+      try {
+        const usersSnap = await getDocs(
+          query(collection(db, "users"), orderBy("leagueCredits", "desc"), limit(50))
+        );
+        if (usersSnap.empty) {
+          lbEl.innerHTML = `<div class="empty">No scores yet — play some games!</div>`;
+        } else {
+          lbEl.innerHTML = "";
+          let myRank = null;
+          usersSnap.docs.forEach((d, i) => {
+            const p = d.data();
+            const rank = i + 1;
+            const isMe = d.id === user.uid;
+            if (isMe) myRank = rank;
+            const rankClass = rank === 1 ? "gold" : rank === 2 ? "silver" : rank === 3 ? "bronze" : "";
+            const medal = rank <= 4 ? medals[rank - 1] : `#${rank}`;
+            const row = document.createElement("div");
+            row.className = "lb-row" + (isMe ? " me" : "");
+            row.innerHTML = `
+              <div class="lb-rank ${rankClass}">${medal}</div>
+              <div class="lb-name">${p.username || "Unknown"}${isMe ? " (you)" : ""}</div>
+              <div class="lb-credits">${p.leagueCredits || 0}</div>
+            `;
+            lbEl.appendChild(row);
+          });
+          if (myRank) document.getElementById("myRankLabel").textContent = `Ranked #${myRank} overall`;
+        }
+      } catch(e) {
+        lbEl.innerHTML = `<div class="empty">Could not load leaderboard.</div>`;
+      }
+
+      // Personal history — last 30 entries
+      const histEl = document.getElementById("history");
+      try {
+        const histSnap = await getDocs(
+          query(
+            collection(db, "leagueHistory"),
+            where("uid", "==", user.uid),
+            orderBy("createdAt", "desc"),
+            limit(30)
+          )
+        );
+        if (histSnap.empty) {
+          histEl.innerHTML = `<div class="empty">No games recorded yet. Play a game to earn your first credits!</div>`;
+        } else {
+          histEl.innerHTML = "";
+          histSnap.docs.forEach(d => {
+            const h = d.data();
+            const row = document.createElement("div");
+            row.className = "hist-row";
+            row.innerHTML = `
+              <span class="hist-badge ${badgeClass(h)}">${badgeLabel(h)}</span>
+              <span class="hist-place">${medals[h.placement - 1] || ""} ${ordinal(h.placement)} place</span>
+              <span class="hist-credits">+${h.credits}</span>
+              <span class="hist-date">${formatDate(h.createdAt)}</span>
+            `;
+            histEl.appendChild(row);
+          });
+        }
+      } catch(e) {
+        histEl.innerHTML = `<div class="empty">Could not load history.</div>`;
+      }
+    });
+  </script>
+</body>
+</html>
