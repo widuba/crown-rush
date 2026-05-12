@@ -444,7 +444,9 @@
     /* In-game: collapse room card to just the header */
     body.view-game #roomCard .menu-grid,
     body.view-game #roomCard .room-main-title,
-    body.view-game #roomCard #lobbyBox { display: none; }
+    body.view-game #roomCard #lobbyBox,
+    body.view-game #roomCard .t-menu-section,
+    body.view-game #roomCard #quickLinks { display: none; }
 
     /* ════════════════════════════
        GAME AREA
@@ -812,8 +814,7 @@
     body.view-tournament #roomCard .menu-grid,
     body.view-tournament #roomCard #lobbyBox,
     body.view-tournament #roomCard .t-menu-section { display: none; }
-    body.view-game:not(.view-game-tournament) #tournamentCard { display: none !important; }
-    body.view-game-tournament #tournamentCard { display: flex; }
+    body.view-game #tournamentCard { display: none !important; }
 
     .t-menu-section {
       display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;
@@ -1184,7 +1185,7 @@
         </div>
       </div>
 
-      <div style="display:flex;gap:8px;margin-top:8px;">
+      <div id="quickLinks" style="display:flex;gap:8px;margin-top:8px;">
         <a href="/pass/" style="text-decoration:none;flex:1;">
           <button class="secondary" style="width:100%;padding:10px;">🪪 My Player Pass</button>
         </a>
@@ -1843,7 +1844,7 @@ showRoom();
     }
 
     function showGame() {
-      document.body.className = tournamentId ? "view-game view-game-tournament" : "view-game";
+      document.body.className = "view-game";
       document.getElementById("authCard").style.display = "none";
       document.getElementById("roomCard").style.display = "flex";
       document.getElementById("gameArea").style.display = "flex";
