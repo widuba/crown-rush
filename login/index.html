@@ -3297,7 +3297,7 @@ showRoom();
             isTournament: false,
             createdAt: serverTimestamp()
           });
-          tx.update(userRef, { leagueCredits: increment(credits) });
+          tx.set(userRef, { leagueCredits: increment(credits) }, { merge: true });
         });
       } catch(e) { console.error("League credit error:", e); }
     }
@@ -3331,7 +3331,7 @@ showRoom();
             isTournament: true,
             createdAt: serverTimestamp()
           });
-          tx.update(userRef, { leagueCredits: increment(credits) });
+          tx.set(userRef, { leagueCredits: increment(credits) }, { merge: true });
         });
       } catch(e) { console.error("Tournament league credit error:", e); }
     }
