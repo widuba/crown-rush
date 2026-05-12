@@ -814,8 +814,7 @@
     body.view-tournament #roomCard .menu-grid,
     body.view-tournament #roomCard #lobbyBox,
     body.view-tournament #roomCard .t-menu-section { display: none; }
-    body.view-game:not(.view-game-tournament) #tournamentCard { display: none !important; }
-    body.view-game-tournament #tournamentCard { display: flex; }
+    body.view-game #tournamentCard { display: none !important; }
 
     .t-menu-section {
       display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;
@@ -1845,7 +1844,7 @@ showRoom();
     }
 
     function showGame() {
-      document.body.className = tournamentId ? "view-game view-game-tournament" : "view-game";
+      document.body.className = "view-game";
       document.getElementById("authCard").style.display = "none";
       document.getElementById("roomCard").style.display = "flex";
       document.getElementById("gameArea").style.display = "flex";
