@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Privacy Policy — Hidden Towers</title>
+  <meta name="description" content="Privacy Policy for Hidden Towers by widuba." />
+
+  <style>
+    :root {
+      --bg: #0a0718;
+      --card: rgba(255,255,255,.065);
+      --border: rgba(255,255,255,.12);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --gold: #f59e0b;
+      --purple: #a78bfa;
+      --green: #6ee7b7;
+      --red: #f87171;
+      --radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-text-size-adjust: 100%;
+      overscroll-behavior: none;
+      scrollbar-width: none;
+    }
+
+    body::-webkit-scrollbar,
+    html::-webkit-scrollbar,
+    *::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    body {
+      padding:
+        max(48px, env(safe-area-inset-top))
+        16px
+        max(48px, env(safe-area-inset-bottom))
+        16px;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,58,237,.25) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 10% 20%, rgba(245,158,11,.08) 0%, transparent 70%);
+      line-height: 1.65;
+    }
+
+    .page {
+      width: min(100%, 900px);
+      margin: 0 auto;
+    }
+
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--purple);
+      font-weight: 800;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      padding: 9px 14px;
+      border-radius: 999px;
+      margin-bottom: 18px;
+    }
+
+    .hero {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-size: clamp(30px, 7vw, 54px);
+      line-height: 1.05;
+      margin-bottom: 8px;
+      letter-spacing: -.04em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 650;
+    }
+
+    .updated {
+      color: var(--gold);
+      font-weight: 800;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      font-size: 22px;
+      line-height: 1.2;
+      margin-bottom: 10px;
+      color: var(--gold);
+    }
+
+    h3 {
+      font-size: 17px;
+      margin: 16px 0 8px;
+      color: var(--purple);
+    }
+
+    p {
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    ul {
+      margin: 8px 0 12px 22px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    strong {
+      color: #ffffff;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .contact {
+      color: var(--green);
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .notice {
+      border-left: 4px solid var(--gold);
+      background: rgba(245,158,11,.08);
+      padding: 12px 14px;
+      border-radius: 0 14px 14px 0;
+      margin-top: 12px;
+      color: #fde68a;
+      font-weight: 650;
+    }
+
+    @media (max-width: 500px) {
+      body {
+        padding:
+          max(72px, env(safe-area-inset-top))
+          10px
+          max(48px, env(safe-area-inset-bottom))
+          10px;
+      }
+
+      .hero,
+      .card {
+        padding: 18px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <a class="back" href="../index.html">← Back to Hidden Towers</a>
+
+    <section class="hero">
+      <h1>Privacy Policy</h1>
+      <p class="subtitle">Hidden Towers by widuba</p>
+      <p class="updated">Last updated: May 20, 2026</p>
+    </section>
+
+    <section class="card">
+      <h2>1. Overview</h2>
+      <p>
+        This Privacy Policy explains how <strong>Hidden Towers</strong> collects, uses, stores, and protects information when you use the Hidden Towers app or website.
+      </p>
+      <p>
+        Hidden Towers is developed and operated by <strong>widuba</strong>. If you have questions about this policy or want to request account deletion, contact:
+      </p>
+      <p class="contact">dukesybarlow.web@gmail.com</p>
+    </section>
+
+    <section class="card">
+      <h2>2. Information We Collect</h2>
+      <p>Hidden Towers collects only the information needed to create accounts, run multiplayer games, and display game progress.</p>
+
+      <h3>Account Information</h3>
+      <ul>
+        <li>Email address</li>
+        <li>Password authentication information handled by Firebase Authentication</li>
+        <li>Username</li>
+        <li>Player ID</li>
+      </ul>
+
+      <h3>Game Information</h3>
+      <ul>
+        <li>Room codes and game/tournament codes</li>
+        <li>Player colors</li>
+        <li>Game state, board state, turns, scores, wins, losses, and match results</li>
+        <li>League credits, leaderboard standing, and recent game history</li>
+      </ul>
+
+      <h3>Analytics Information</h3>
+      <p>
+        Hidden Towers may use Google Analytics/Firebase Analytics to understand general app usage, performance, and engagement. Analytics may include general usage events and technical information, but Hidden Towers does not use analytics for advertising.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>3. Information We Do Not Collect</h2>
+      <p>Hidden Towers does not collect or request:</p>
+      <ul>
+        <li>Precise location data</li>
+        <li>Contacts</li>
+        <li>Photos or photo library access</li>
+        <li>Camera access</li>
+        <li>Microphone access</li>
+        <li>Bluetooth data</li>
+        <li>Health data</li>
+        <li>Payment card information</li>
+        <li>Device sensor data</li>
+      </ul>
+      <p>
+        Hidden Towers does not show ads and does not use advertising networks.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>4. Player Pass Information</h2>
+      <p>
+        The Player Pass page may display a Player ID and QR code. The Player ID comes from your Hidden Towers account profile.
+      </p>
+      <p>
+        If the Player Pass page includes fields such as date of birth or notes, those fields are intended for on-screen display or printing only. Hidden Towers does not intentionally store those date of birth or notes fields in Firebase.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>5. How We Use Information</h2>
+      <p>We use collected information to:</p>
+      <ul>
+        <li>Create and manage user accounts</li>
+        <li>Let players create, join, and play multiplayer games</li>
+        <li>Display usernames, Player IDs, leagues, scores, and match history</li>
+        <li>Operate tournaments and Player Pass QR features</li>
+        <li>Improve app reliability, layout, and gameplay experience</li>
+        <li>Help prevent abuse, errors, and unauthorized access</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>6. Third-Party Services</h2>
+      <p>Hidden Towers uses Google Firebase services, including:</p>
+      <ul>
+        <li><strong>Firebase Authentication</strong> for email/password account login</li>
+        <li><strong>Cloud Firestore</strong> for storing account profiles, game rooms, game state, league credits, and match history</li>
+        <li><strong>Google Analytics/Firebase Analytics</strong> for basic usage and performance analytics</li>
+      </ul>
+      <p>
+        These services are provided by Google. Information processed by Firebase and Google Analytics is also subject to Google’s applicable privacy and data processing terms.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>7. Data Sharing</h2>
+      <p>
+        Hidden Towers does not sell personal information.
+      </p>
+      <p>
+        Some game information is shared with other players as part of normal gameplay, such as usernames, Player IDs, player colors, scores, room status, and game results.
+      </p>
+      <p>
+        We may disclose information if required by law, to protect the safety or integrity of the app, or to prevent abuse or unauthorized activity.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>8. Children’s Privacy</h2>
+      <p>
+        Hidden Towers is available for all ages, but it is not directed specifically to children under 13.
+      </p>
+      <p>
+        The app only requires email, password, and username to create an account. If a parent or guardian believes a child has provided information and wants it deleted, they may contact us at:
+      </p>
+      <p class="contact">dukesybarlow.web@gmail.com</p>
+    </section>
+
+    <section class="card">
+      <h2>9. Data Retention</h2>
+      <p>
+        Hidden Towers keeps account and gameplay data for as long as needed to operate the app, maintain leaderboards, support game history, and provide multiplayer features.
+      </p>
+      <p>
+        Some game records may remain for leaderboard, tournament, anti-abuse, or app integrity purposes unless deletion is requested and legally or technically feasible.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>10. Account Deletion and Data Requests</h2>
+      <p>
+        To request account deletion or deletion of personal information associated with your Hidden Towers account, email:
+      </p>
+      <p class="contact">dukesybarlow.web@gmail.com</p>
+      <p>
+        Please include the email address used for your account and, if possible, your username or Player ID. We may need to verify that you control the account before deleting data.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>11. Security</h2>
+      <p>
+        Hidden Towers uses Firebase Authentication and Firestore security rules to help protect account and game data. However, no online service can guarantee perfect security.
+      </p>
+      <p>
+        Users should keep their passwords private and avoid sharing account access.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>12. Changes to This Policy</h2>
+      <p>
+        This Privacy Policy may be updated from time to time. If changes are made, the “Last updated” date at the top of this page will be revised.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>13. Contact</h2>
+      <p>
+        For privacy questions, account deletion requests, or data requests, contact:
+      </p>
+      <p class="contact">dukesybarlow.web@gmail.com</p>
+
+      <div class="notice">
+        This policy is written for the current version of Hidden Towers. If the app later adds ads, purchases, camera access, location, push notifications, social features, or new analytics/tracking tools, this policy and the App Store privacy answers should be updated.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let lastTouchEnd = 0;
+
+    document.addEventListener("touchend", function (event) {
+      const now = Date.now();
+
+      if (now - lastTouchEnd <= 350) {
+        event.preventDefault();
+      }
+
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    document.addEventListener("gesturestart", function (event) {
+      event.preventDefault();
+    });
+
+    document.addEventListener("gesturechange", function (event) {
+      event.preventDefault();
+    });
+
+    document.addEventListener("gestureend", function (event) {
+      event.preventDefault();
+    });
+  </script>
+</body>
+</html>
